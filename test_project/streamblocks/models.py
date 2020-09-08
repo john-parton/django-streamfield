@@ -1,5 +1,8 @@
 from django.db import models
 
+from streamfield.fields import StreamField
+
+
 class RichText(models.Model):
     text = models.TextField(blank=True, null=True)   
 
@@ -31,3 +34,7 @@ STREAMBLOCKS_MODELS = [
     RichText,
     Column
 ]
+
+
+class ContentWrapper(models.Model):
+    stream = StreamField()

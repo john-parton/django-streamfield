@@ -1,97 +1,120 @@
 import json
 from copy import deepcopy
 from django.db import models
-from django.forms.widgets import Widget
+from django import forms
 from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
 from django.conf import settings
-from .base import StreamObject
+from .base import StreamList, StreamItem
 from .settings import (
-    BLOCK_OPTIONS, 
-    SHOW_ADMIN_HELP_TEXT, 
-    DELETE_BLOCKS_FROM_DB, 
+    BLOCK_OPTIONS,
+    SHOW_ADMIN_HELP_TEXT,
+    DELETE_BLOCKS_FROM_DB,
     BASE_ADMIN_URL
-    )
+)
 
 
-class StreamFieldWidget(Widget):
+class StreamWidget(forms.Widget):
     template_name = 'streamfield/streamfield_widget.html'
-
-    def __init__(self, attrs=None):
-        self.model_list = attrs.pop('model_list', [])
-        
-        model_list_info = {}
-        for block in self.model_list:
-            as_list = hasattr(block, "as_list") and block.as_list
-        
-            options = block.options if hasattr(block, "options") else BLOCK_OPTIONS
-            if hasattr(block, "extra_options"):
-                options = deepcopy(options)
-                options.update(block.extra_options)
-
-            model_doc = block._meta.verbose_name_plural if as_list else block._meta.verbose_name
-            model_list_info[block.__name__] = {
-                'model_doc': str(model_doc),
-                'abstract': block._meta.abstract,
-                'as_list': as_list,
-                'options': options
-            }
-        
-        attrs["model_list_info"] = json.dumps(model_list_info)
-        attrs['show_admin_help_text'] = SHOW_ADMIN_HELP_TEXT
-        attrs['delete_blocks_from_db'] = DELETE_BLOCKS_FROM_DB
-        attrs['base_admin_url'] = BASE_ADMIN_URL
-        super().__init__(attrs)
-
-    def format_value(self, value):
-        if value != "" and not isinstance(value, StreamObject):
-            value = StreamObject(value, self.model_list)            
-        return value
 
     class Media:
         css = {
-            'all': ('streamfield/css/streamfield_widget.css',)
+            'all': ('streamfield/css/streamfield_widget.css', )
         }
         js = (
             'streamfield/vendor/lodash.min.js',
             'streamfield/vendor/js.cookie.js',
-            'streamfield/vendor/vue.min.js',
+            'streamfield/vendor/vue.js',  # TODO Use min
             'streamfield/vendor/Sortable.min.js',
             'streamfield/vendor/vuedraggable.umd.min.js',
             'streamfield/vendor/axios.min.js',
             'streamfield/js/streamfield_widget.js',
-            )
+        )
 
-class StreamField(models.TextField):
+
+class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
+    widget = StreamWidget
+
+    def __init__(self, model_list, **kwargs):
+        self.model_list = model_list
+        self.popup_size = kwargs.pop('popup_size', (1000, 500))
+        super().__init__(**kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+
+        model_list_info = {}
+
+        for model in self.model_list:
+            as_list = getattr(model, "as_list", False)
+            options = getattr(model, "options", BLOCK_OPTIONS)
+
+            model_doc = model._meta.verbose_name_plural if as_list else model._meta.verbose_name
+
+            model_list_info[model.__name__] = {
+                'model_doc': str(model_doc),
+                'abstract': model._meta.abstract,
+                'as_list': as_list,
+                'options': options
+            }
+
+        attrs['model_list_info'] = json.dumps(model_list_info)
+        # Move these elsewhere, this isn't the right place for them
+        attrs['show_admin_help_text'] = SHOW_ADMIN_HELP_TEXT
+        attrs['delete_blocks_from_db'] = DELETE_BLOCKS_FROM_DB
+        attrs['base_admin_url'] = BASE_ADMIN_URL
+        attrs['data-popup_size'] = json.dumps(self.popup_size)  # Just make this popup_size_width and popup_size_height or something
+
+        return attrs
+
+    def prepare_value(self, value):
+        if isinstance(value, StreamList):
+            value = [
+                dict(item) for item in value
+            ]
+
+        return super().prepare_value(value)
+
+
+class StreamField(models.JSONField):
     description = "StreamField"
 
     def __init__(self, *args, **kwargs):
-        self.model_list = kwargs.pop('model_list', [])
-        self.popup_size = kwargs.pop('popup_size', (1000, 500))
+        self.model_list = kwargs.pop('model_list', None)
+
         kwargs['blank'] = True
-        kwargs['default'] = "[]"
+        kwargs['default'] = StreamList
+
         super().__init__(*args, **kwargs)
 
+    def from_db_value(self, *args, **kwargs):
+        value = super().from_db_value(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection):
-        return self.to_python(json.loads(value))
-        
-    def to_python(self, value):
-        if not value or isinstance(value, StreamObject):
-            return value
-        return StreamObject(value, self.model_list)
+        if isinstance(value, str):
+            value = json.loads(value)
 
-    def get_prep_value(self, value):
-        return json.dumps(str(value))
+        return StreamList(
+            StreamItem(item) for item in value
+        )
+
+    # def to_python(self, value):
+    #     if isinstance(value, StreamList):
+    #         return value
+    #
+    #     # Not totally sure why this would happen?
+    #     if isinstance(value, str):
+    #         value = json.loads(value)
+    #
+    #     return StreamList(
+    #         StreamItem(item) for item in value
+    #     )
+
 
     def formfield(self, **kwargs):
-        widget_class = kwargs.get('widget', StreamFieldWidget)
-        attrs = {}
-        attrs["model_list"] = self.model_list
-        attrs["data-popup_size"] = list(self.popup_size)
+        # This is a fairly standard way to set up some defaults
+        # while letting the caller override them.
         defaults = {
-            'widget': widget_class(attrs=attrs),
+            'form_class': StreamForm,
+            'model_list': self.model_list
         }
+        defaults.update(kwargs)
         return super().formfield(**defaults)
-
-
-FORMFIELD_FOR_DBFIELD_DEFAULTS[StreamField] = {'widget': StreamFieldWidget}

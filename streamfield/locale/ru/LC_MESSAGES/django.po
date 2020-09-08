@@ -48,11 +48,11 @@ msgstr ""
 "</ul>\n"
 
 #: templates/streamfield/streamfield_widget.html:4
-msgid "Are you shure, that you want to delete this block?"
+msgid "Are you sure, that you want to delete this block?"
 msgstr "Вы уверены, что хотите удалить этот блок?"
 
 #: templates/streamfield/streamfield_widget.html:5
-msgid "Are you shure, that you want to delete this subblock?"
+msgid "Are you sure, that you want to delete this subblock?"
 msgstr "Вы уверены, что хотите удалить этот подблок?"
 
 #: templates/streamfield/streamfield_widget.html:11
