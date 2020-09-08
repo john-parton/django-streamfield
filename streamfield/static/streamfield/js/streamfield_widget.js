@@ -29,7 +29,9 @@
         show_help: false,
         show_add_block: false,
         will_removed: [] // blocks that will be removed from db
-      }
+      };
+
+      console.log(data.model_info);
 
       var app = new Vue({
         el: app_node,
@@ -42,13 +44,9 @@
             if ( this.isAbstract(block) ) {
               this.updateAbstractBlock(block.unique_id);
             } else {
-              if (Array.isArray(block.id)) {
-                block.id.forEach(
-                  block_id => this.updateBlock(block.unique_id, block_id)
-                )
-              } else {
-                this.updateBlock(block.unique_id, block.id);
-              }
+              block.object_id.forEach(
+                block_id => this.updateBlock(block.unique_id, block_id)
+              )
             }
           });
 
@@ -87,44 +85,42 @@
 
         },
         methods: {
-          isArray: function (block) {
-            return Array.isArray(block);
+          isArray: obj => Array.isArray(obj),
+
+          asList: function (block) {
+            return this.model_info[block.content_type_id].as_list;
           },
 
           isAbstract: function (block) {
-            return this.model_info[block.model_name].abstract;
+            return this.model_info[block.content_type_id].abstract;
           },
 
           model_title: function (block) {
             var title = '...';
-            if (this.model_info[block.model_name]) {
-              title = this.model_info[block.model_name].model_doc;
+            if (this.model_info[block.content_type_id]) {
+              title = this.model_info[block.content_type_id].model_doc;
             }
             return title;
           },
 
-          model_name_lower: function (block){
-            return block.model_name.toLowerCase()
+          model_name: function (block) {
+            return this.model_info[block.content_type_id].model_name;
           },
 
-          instance_unique_id: function(block, instance_id){
-            return block.model_name.toLowerCase() + instance_id;
-          },
+          instance_unique_id: (block, instance_id) => block.content_type_id + ":" + instance_id,
 
-          create_unique_hash: function() {
-            return Math.random().toString(36).substring(7);
-          },
+          create_unique_hash: () => Math.random().toString(36).substring(7),
 
           block_admin_url: function(block) {
-            return base_admin_url + 'streamblocks/' + this.model_name_lower(block) + '/';
+            return base_admin_url + 'streamblocks/' + this.model_name(block) + '/';
           },
 
           instance_admin_render_url: function(block, instance_id) {
-            return '/streamfield/admin-instance/' + this.model_name_lower(block) + '/' + instance_id;
+            return '/streamfield/admin-instance/' + this.model_name(block) + '/' + instance_id;
           },
 
           abstract_block_render_url: function(block) {
-            return '/streamfield/abstract-block/' + this.model_name_lower(block) + '/';
+            return '/streamfield/abstract-block/' + this.model_name(block) + '/';
           },
 
           get_change_model_link: function(block, instance_id){
@@ -145,7 +141,7 @@
           },
 
           getAbstractBlockContent: function(block) {
-            return this.blocks[block.model_name];
+            return this.blocks[block.content_type_id];
           },
 
           updateAbstractBlock(block_unique_id) {
@@ -153,11 +149,14 @@
 
             // change block content
             ax.get(this.abstract_block_render_url(block)).then(
-              response => app.$set(app.blocks, block.model_name, response.data)
+              response => app.$set(app.blocks, block.content_type_id, response.data)
             );
           },
 
           updateBlock: function (block_unique_id, instance_id) {
+            // Ensure always an integer... better place to put this?
+            instance_id = parseInt(instance_id);
+
             var block = _.find(this.stream, ['unique_id', block_unique_id]);
 
             // change block content
@@ -167,14 +166,8 @@
               response => app.$set(app.blocks, app.instance_unique_id(block, instance_id), response.data)
             );
 
-            // if added new instance – add new instance id to block list
-            if (Array.isArray(block.id) && block.id.indexOf(instance_id) == -1) {
-              block.id.push(instance_id);
-            }
-
-            // if added new instance to block without list
-            if ( !Array.isArray(block.id) && block.id == -1 ) {
-              block.id = instance_id;
+            if (block.object_id.indexOf(instance_id) == -1) {
+              block.object_id.push(instance_id);
             }
           },
 
@@ -203,7 +196,7 @@
 
                 // prepare to remove from db
                 this.will_removed.push({
-                  model_name: block.model_name,
+                  content_type_id: block.content_type_id,
                   id: instance_id
                 });
 
@@ -213,27 +206,26 @@
 
           deleteAction: function(block, id, idx) {
             return ax.delete(
-              '/streamfield/admin-instance/' + app.model_name_lower(block) + '/' + id + '/delete/'
+              '/streamfield/admin-instance/' + app.model_name(block) + '/' + id + '/delete/'
             )
           },
 
-          addNewBlock: function(block, model_name) {
+          addNewBlock: function(block, content_type_id) {
+            content_type_id = parseInt(content_type_id);
+
             var options = {};
             var new_block;
 
-            _.forEach(this.model_info[model_name].options, function(option, key) {
+            _.forEach(this.model_info[content_type_id].options, function(option, key) {
               app.$set(options, key, option.default);
             });
 
             new_block = {
               unique_id: this.create_unique_hash(),
-              model_name: model_name,
-              options: options
+              content_type_id: content_type_id,
+              options: options,
+              object_id: []
             };
-
-            if (!block.abstract) {
-              new_block.id = block.as_list ? [] : -1;
-            }
 
             this.stream.push(new_block);
             this.show_add_block = false;
@@ -255,8 +247,8 @@
               // return only fields that in initial data
               return {
                 unique_id: i.unique_id,
-                model_name: i.model_name,
-                id: i.id,
+                content_type_id: i.content_type_id,
+                object_id: i.object_id,
                 options: i.options
               };
             }));

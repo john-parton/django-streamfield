@@ -1,9 +1,11 @@
 import json
+
 from copy import deepcopy
 from django.db import models
 from django import forms
-from django.contrib.admin.options import FORMFIELD_FOR_DBFIELD_DEFAULTS
+from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
+from django.urls import reverse
 from .base import StreamList, StreamItem
 from .settings import (
     BLOCK_OPTIONS,
@@ -50,11 +52,14 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
 
             model_doc = model._meta.verbose_name_plural if as_list else model._meta.verbose_name
 
-            model_list_info[model.__name__] = {
-                'model_doc': str(model_doc),
+            content_type = ContentType.objects.get_for_model(model)
+
+            model_list_info[content_type.id] = {
+                'verbose_name': str(model_doc),
                 'abstract': model._meta.abstract,
                 'as_list': as_list,
-                'options': options
+                'options': options,
+                'model_name': model._meta.model_name
             }
 
         attrs['model_list_info'] = json.dumps(model_list_info)

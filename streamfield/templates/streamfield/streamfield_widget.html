@@ -17,8 +17,8 @@
 
     <div class="streamfield-models">
         <draggable v-model="stream" group="stream" handle=".block-move">
-        <div v-for="block in stream" 
-            class="stream-model-block" 
+        <div v-for="block in stream"
+            class="stream-model-block"
             :key="block.unique_id">
             <h3 class="streamblock__block__title"><span v-text="model_title(block)"></span>
                 <span class="streamblock__block-handle">
@@ -27,24 +27,24 @@
                 </span>
             </h3>
             <div v-if="!isAbstract(block)">
-                <div v-if="isArray(block.id)" 
+                <div v-if="asList(block)"
                     class="stream-model-block__content"
-                    :class="model_name_lower(block)"
+                    :class="model_name(block)"
                     :id="'id_' + block.unique_id">
                     <draggable v-model="block.id" group="items" handle=".subblock-move">
-                    <span v-for="item_id in block.id" 
+                    <span v-for="item_id in block.object_id"
                         class="stream-model-subblock">
                         <span class="model-field-content"
-                            :id="'id_' + instance_unique_id(block, item_id)" 
+                            :id="'id_' + instance_unique_id(block, item_id)"
                             v-html="getBlockContent(block, item_id)"
                             ></span>
                         <span class="stream-model-subblock-handle">
                             <span class="subblock-move"></span>
                             <span class="subblock-delete" @click="deleteInstance(block.unique_id, item_id)"></span>
                         </span>
-                        <a class="stream-btn" 
-                            :id="'change_id_' + instance_unique_id(block, item_id)" 
-                            title="{% trans "Change" %}" 
+                        <a class="stream-btn"
+                            :id="'change_id_' + instance_unique_id(block, item_id)"
+                            title="{% trans "Change" %}"
                             :href="get_change_model_link(block, item_id)"
                             :data-block="block.unique_id"
                             :data-instance-id="item_id"
@@ -54,53 +54,53 @@
 
                     </span>
                     </draggable>
-                    <a class="stream-btn" 
+                    <a class="stream-btn"
                         :id="'add_id_' + block.unique_id"
                         title="Добавить объект"
                         :href="get_add_model_link(block)"
                         @click.prevent="openPopup"
                         >+ {% trans "Add one more" %}</a>
                 </div>
-                <div v-else 
+                <div v-else
                     class="stream-model-block__content no-subblocks"
-                    :class="model_name_lower(block)">
-                    <template v-if="block.id != -1">
+                    :class="model_name(block)">
+                    <span v-for="item_id in block.object_id">
                         <span class="model-field-content"
-                            :id="'id_' + instance_unique_id(block, block.id)"
-                            v-html="getBlockContent(block, block.id)"
+                            :id="'id_' + instance_unique_id(block, item_id)"
+                            v-html="getBlockContent(block, item_id)"
                             ></span>
-                        <a class="stream-btn" 
-                        :id="'change_id_' + instance_unique_id(block, block.id)" 
+                        <a class="stream-btn"
+                        :id="'change_id_' + instance_unique_id(block, item_id)"
                         title="{% trans "Change" %}"
-                        :href="get_change_model_link(block, block.id)"
+                        :href="get_change_model_link(block, item_id)"
                         :data-block="block.unique_id"
-                        :data-instance-id="block.id"
+                        :data-instance-id="item_id"
                         @click.prevent="openPopup"
                         >{% trans "Change" %}</a>
-                    </template>
-                    <template v-else>
-                        <a class="stream-btn" 
+                    </span>
+                    <span>
+                        <a class="stream-btn"
                         :id="'add_id_' + block.unique_id"
                         title="{% trans "Add content" %}"
                         :href="get_add_model_link(block)"
                         @click.prevent="openPopup"
                         >+ {% trans "Add content" %}</a>
-                    </template>
+                    </span>
                 </div>
             </div> <!-- /v-if="isAbstract" -->
             <div v-else>
                 <div class="stream-model-block__content no-subblocks abstract-block"
-                    :class="model_name_lower(block)">
+                    :class="model_name(block)">
                     <span v-html="getAbstractBlockContent(block)"></span>
                 </div>
             </div>
-            <div class="stream-block__options" v-if="model_info[block.model_name] && !_.isEmpty(model_info[block.model_name].options)">
-                <div class="stream-block__option" v-for="(option, key) in model_info[block.model_name].options">
+            <div class="stream-block__options" v-if="model_info[block.content_type_id] && !_.isEmpty(model_info[block.content_type_id].options)">
+                <div class="stream-block__option" v-for="(option, key) in model_info[block.content_type_id].options">
                     <template v-if="option.type == 'checkbox'">
                         <span v-text="option.label"></span>: <input type="checkbox" v-model="block.options[key]">
                     </template>
                     <template v-else-if="option.type == 'select'">
-                        <span v-text="option.label"></span>: 
+                        <span v-text="option.label"></span>:
                         <select :name="option.label" v-model="block.options[key]">
                             <option v-for="opt in option.options" :value="opt.value" v-text="opt.name"></option>
                         </select>
@@ -112,12 +112,12 @@
         <div class="stream-insert-new-block">
             <div class="add-new-block-button" @click="show_add_block=!show_add_block">+ {% trans "Add new block" %}</div>
             <ul v-if="show_add_block">
-                <li v-for="(block, model_name) in model_info">
-                    <a class="stream-btn" href="#" v-text="'+ ' + block.model_doc" @click.prevent="addNewBlock(block, model_name)"></a>
+                <li v-for="(block, content_type_id) in model_info">
+                    <a class="stream-btn" href="#" v-text="'+ ' + block.verbose_name" @click.prevent="addNewBlock(block, content_type_id)"></a>
                 </li>
             </ul>
         </div>
     </div>
-    
+
     <textarea v-text="textarea" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>{% if widget.value %}{{ widget.value }}{% endif %}</textarea>
 </div>

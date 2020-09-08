@@ -1,6 +1,6 @@
 from django import template
 from django.utils.text import (
-    get_valid_filename, 
+    get_valid_filename,
     camel_case_to_spaces
     )
 from django.utils.safestring import mark_safe
@@ -14,13 +14,13 @@ def format_field(field):
     widget_name = get_widget_name(field)
 
     t = loader.select_template([
-            'streamblocks/admin/fields/%s.html' % widget_name,
-            'streamfield/admin/fields/%s.html' % widget_name,
-            'streamfield/admin/fields/default.html'
-        ])
+        f'streamblocks/admin/fields/{widget_name}.html',
+        f'streamfield/admin/fields/{widget_name}.html',
+        'streamfield/admin/fields/default.html'
+    ])
 
     if widget_name == 'select':
-        
+
         # ForeignKey Field
         if hasattr(field.field, '_queryset'):
             for obj in field.field._queryset:
@@ -32,16 +32,16 @@ def format_field(field):
             for obj in field.field._choices:
                 if obj[0] == field.value():
                     field.obj = obj[1]
-        
 
-    return mark_safe(t.render(dict(
-        field=field
-        )))
+
+    return t.render({
+        'field': field
+    })
 
 def get_widget_name(field):
     return get_valid_filename(
-                camel_case_to_spaces(field.field.widget.__class__.__name__)
-                )
+        camel_case_to_spaces(field.field.widget.__class__.__name__)
+    )
 
 @register.simple_tag
 def stream_render(stream_obj, **kwargs):

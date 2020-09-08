@@ -16,68 +16,27 @@ class StreamItem(collections.UserDict):
     # Always has the following keys
     # unique_id: str
     # content_type_id: int
-    # object_id: typing.Union[int, List[int]]
+    # object_id: List[int]   # Always a list, even if there's only one value
     # options: Dict
 
-    def get_content_type(self):
-        # This is internally cached
-        # TODO Return None on abstract model
-        return ContentType.objects.get_for_id(self['content_type_id'])
-
-    @cached_property
     def model_class(self):
         return ContentType.objects.get_for_id(self['content_type_id']).model_class()
-
-    @property
-    def instance(self):
-        if hasattr(self, '_instance'):
-            return self._instance
-
-        # TODO Handle abstract model by returning None
-        if isinstance(self['object_id'], list):
-            if len(self['object_id']) != 1:
-                warnings.warn("Attempted to get instance from StreamItem with more than one object_id")
-            # Probably won't KeyError
-            object_id = self['object_id'][0]
-        else:
-            object_id = self['object_id']
-
-        self._instance = self.get_content_type().get_object_for_this_type(pk=object_id)
-        return self._instance
-
-    @instance.setter
-    def instance(self, instance):
-        del self._instances
-        self._instance = instance
-
-        content_type = ContentType.objects.get_for_model(type(instance))
-
-        self['content_type_id'] = content_type.id
-        self['object_id'] = instance.pk
-
-    @instance.deleter
-    def instance(self):
-        del self._instance
 
     @property
     def instances(self):
         if hasattr(self, '_instances'):
             return self._instances
 
-        # TODO Handle abstract model by returning []
-        if not isisntance(self['object_id'], list):
-            warnings.warn("Attempted to get instances from StreamItem with only one object_id")
-            ids = [self['object_id']]
-        else:
-            ids = self['object_id']
+        ids = self['object_id']
 
+        # Should this use _base_manager ?
         self._instances = list(
-            self.model_class()._base_manager.using(self._state.db).filter(
+            self.model_class().objects.filter(
                 pk__in=ids
             )
         )
 
-        self._instances.sort(lambda instance: ids.index(instance.pk))
+        self._instances.sort(key=lambda instance: ids.index(instance.pk))
 
         return self._instances
 
@@ -107,10 +66,6 @@ class StreamItem(collections.UserDict):
 
         self['content_type_id'] = content_type_id
         self['object_id'] = object_id
-
-    @instances.deleter
-    def instances(self):
-        del self._instances
 
 
 class StreamList(collections.UserList):
@@ -151,39 +106,37 @@ class StreamList(collections.UserList):
     """
 
 
-    def _iterate_over_models(self, callback, tmpl_ctx=None):
+    def _iterate_over_models(self, callback, extra_context=None):
         # iterate over models and apply callback function
         data = []
         for stream_item in self:
 
             model_class = stream_item.model_class()
-            model_str = model_class.__name__.lower()
+
             as_list = getattr(model_class, 'as_list', False)
 
             context = {
-                'model': model_str,
                 'unique_id': stream_item['unique_id'],
-                'content': stream_item.instances if as_list else stream_item.instance,
+                'content': stream_item.instances if as_list else stream_item.instances[0],
                 'as_list': as_list,
+                # 'app_label': model._meta.app_label,
+                'model_name': model_class._meta.model_name
             }
 
             if extra_context:
                 context.update(extra_context)
 
             data.append(
-                callback(model_class, model_str, content, context)
+                callback(model_class, context)
 
             )
 
         return data
 
-    def _render(self, tmpl_ctx=None):
-        data = self._iterate_over_models(_get_render_data, tmpl_ctx)
+    def render(self, extra_context=None):
+        data = self._iterate_over_models(_get_render_data, extra_context=extra_context)
+        assert False, data
         return mark_safe("".join(data))
-
-    @cached_property
-    def render(self):
-        return self._render()
 
     def as_list(self):
         return self._iterate_over_models(_get_data_list)
@@ -194,46 +147,48 @@ class StreamList(collections.UserList):
         return mark_safe("".join(data))
 
 
-def _get_block_tmpl(model_class, model_str):
-    if hasattr(model_class, 'block_template'):
-        return model_class.block_template
-    else:
-        return 'streamblocks/%s.html' % model_str.lower()
+def _get_block_tmpl(model_class):
+    return getattr(
+        model_class,
+        'block_template',
+        f'streamblocks/{model_class._meta.model_name}.html'
+    )
 
 
-def _get_render_data(model_class, model_str, context):
-    block_tmpl = _get_block_tmpl(model_class, model_str)
+def _get_render_data(model_class, context):
+    block_tmpl = _get_block_tmpl(model_class)
     try:
         t = loader.get_template(block_tmpl)
     except loader.TemplateDoesNotExist:
-        ctx.update(dict(
-            block_tmpl=block_tmpl,
-            model_str=model_str
-            ))
+        context['block_tmpl'] = block_tmpl
         t = loader.get_template('streamfield/default_block_tmpl.html')
-    return t.render(ctx)
+    return t.render(context)
 
 # only for complex blocks
-def _get_render_admin_data(model_class, model_str, context):
+def _get_render_admin_data(model_class, context):
+    model_name = context['model_name']
+
     t = loader.select_template([
-        'streamblocks/admin/%s.html' % model_str.lower(),
+        f'streamblocks/admin/{model_name}.html',
         'streamfield/admin/change_form_render_template.html'
-        ])
+    ])
 
     content = context['content']
 
     objs = content if isinstance(content, list) else [content]
     return format_html_join(
-            '\n', "{}",
+        '\n', "{}",
+        (
             (
-                (t.render({
+                t.render({
                     'form': get_form_class(model_class)(instance=obj)
-                    }),
-            ) for obj in objs)
+                }),
+            ) for obj in objs
         )
+    )
 
-def _get_data_list(model_class, model_str, context):
+def _get_data_list(model_class, context):
     return {
         'data': context,
-        'template': _get_block_tmpl(model_class, model_str)
+        'template': _get_block_tmpl(model_class)
     }
