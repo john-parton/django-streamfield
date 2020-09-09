@@ -6,6 +6,7 @@ from django.template.response import TemplateResponse
 from django.conf import settings
 
 STREAMBLOCKS_APP_PATH = getattr(settings, "STREAMFIELD_STREAMBLOCKS_APP_PATH", "streamblocks")
+
 try:
     streamblocks_app = import_module("%s.models" % STREAMBLOCKS_APP_PATH)
     STREAMBLOCKS_MODELS = streamblocks_app.STREAMBLOCKS_MODELS
@@ -25,11 +26,16 @@ class StreamBlocksAdmin(admin.ModelAdmin):
             popup_response_data = json.dumps({
                 'app_id': request.POST.get("app_id"),
                 'block_id': request.POST.get("block_id"),
-                'instance_id': str(value),
+                'instance_id': str(value),  # Why is this a string here?
             })
-            return TemplateResponse(request, self.popup_response_template, {
-                            'popup_response_data': popup_response_data,
-                        })
+
+            # Why not use render shortcut? or super() ?
+            return TemplateResponse(
+                request, self.popup_response_template, {
+                    'popup_response_data': popup_response_data,
+                }
+            )
+
         return super().response_add(request, obj, post_url_continue)
 
     def response_change(self, request, obj):
@@ -39,15 +45,17 @@ class StreamBlocksAdmin(admin.ModelAdmin):
             attr = str(to_field) if to_field else opts.pk.attname
             value = request.resolver_match.kwargs['object_id']
             new_value = obj.serializable_value(attr)
+            # Very boilerplate
             popup_response_data = json.dumps({
                 'action': 'change',
                 'app_id': request.POST.get("app_id"),
                 'block_id': request.POST.get("block_id"),
                 'instance_id': request.POST.get("instance_id"),
             })
-            return TemplateResponse(request, self.popup_response_template, {
-                            'popup_response_data': popup_response_data,
-                        })
+            return TemplateResponse(
+                request, self.popup_response_template, {
+                    'popup_response_data': popup_response_data,
+                })
 
         return super().response_change(request, obj)
 
@@ -65,7 +73,7 @@ class StreamBlocksAdmin(admin.ModelAdmin):
                         })
 
         return super().response_delete(request, obj_display, obj_id)
-    
+
 # if user defined admin for his blocks, then do not autoregiser block models
 
 for model in STREAMBLOCKS_MODELS:

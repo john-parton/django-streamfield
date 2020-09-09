@@ -116,7 +116,7 @@
           },
 
           instance_admin_render_url: function (block, instance_id) {
-            return '/streamfield/admin-instance/' + this.model_name(block) + '/' + instance_id;
+            return `/streamfield/admin-instance-test/?content_type_id=${ block.content_type_id }&object_id=${ instance_id }`;
           },
 
           abstract_block_render_url: function (block) {

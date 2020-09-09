@@ -1,41 +1,51 @@
 # -*- coding: utf-8 -*-
+from django.forms import modelform_factory
 from django.template import loader
 from django.http import JsonResponse
+from django.http import Http404
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic import DetailView, TemplateView
 from .forms import get_form_class
 
-def admin_instance_class(model, base=DetailView):
-    
-    if hasattr(model, 'custom_admin_template'):
-        tmpl_name = model.custom_admin_template
-    else:
-        tmpl = loader.select_template([
-            'streamblocks/admin/%s.html' % model.__name__.lower(),
+from django.views.generic.edit import ModelFormMixin
+
+
+class RenderWidgetView(ModelFormMixin, DetailView):
+
+    @property
+    def form_class(self):
+        return modelform_factory(self.object.__class__, fields='__all__')
+
+    def get_object(self, *args, **kwargs):
+        try:
+            content_type = ContentType.objects.get_for_id(self.request.GET.get('content_type_id'))
+        except ContentType.DoesNotExist:
+            raise Http404
+
+        return content_type.get_object_for_this_type(pk=self.request.GET.get('object_id'))
+
+    def get_template_names(self):
+        model = self.object.__class__
+
+        if hasattr(model, 'custom_admin_template'):
+            return [
+                model.custom_admin_template
+            ]
+
+        return [
+            f'streamblocks/admin/{model._meta.model_name}.html',
             'streamfield/admin/change_form_render_template.html'
-        ])
-        tmpl_name = tmpl.template.name
-        
-    def get_context_data(self, **kwargs):
-        context = base.get_context_data(self, **kwargs)
-        
-        # forms
-        obj = super(self.__class__, self).get_object()
-        context['form'] = get_form_class(model)(instance=obj)
+        ]
 
-        return context
+    def get_context_data(self, *args, **kwargs):
+        context_data = super().get_context_data(*args, **kwargs)
+        context_data['form'] = self.form_class(instance=self.object)
+        return context_data
 
-    attrs = dict(
-        model = model,
-        template_name = tmpl_name,
-        get_context_data = get_context_data
-        )
-
-    return type(str(model.__name__ + 'DetailView'), (base, ), attrs )
 
 
 def abstract_block_class(model, base=TemplateView):
-    
+
     if hasattr(model, 'custom_admin_template'):
         tmpl_name = model.custom_admin_template
     else:
@@ -45,12 +55,12 @@ def abstract_block_class(model, base=TemplateView):
         ])
         tmpl_name = tmpl.template.name
 
-    attrs = dict(
-        model = model,
-        template_name = tmpl_name,
-        )
-
-    return type(str(model.__name__ + 'TemplateView'), (base, ), attrs )
+    return type(
+        str(model.__name__ + 'TemplateView'), (base, ), {
+            'model': model,
+            'template_name': tmpl_name,
+        }
+    )
 
 
 def delete_instance(request, model_name, pk):
