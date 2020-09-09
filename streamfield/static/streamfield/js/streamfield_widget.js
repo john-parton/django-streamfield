@@ -41,13 +41,9 @@
           // and store all blocks
 
           data.stream.forEach(block => {
-            if ( this.isAbstract(block) ) {
-              this.updateAbstractBlock(block.unique_id);
-            } else {
-              block.object_id.forEach(
-                block_id => this.updateBlock(block.unique_id, block_id)
-              )
-            }
+            block.object_id.forEach(
+              block_id => this.updateBlock(block.unique_id, block_id)
+            )
           });
 
           // delete removed instances from db when form submit
@@ -91,10 +87,6 @@
             return this.model_info[block.content_type_id].as_list;
           },
 
-          isAbstract: function (block) {
-            return this.model_info[block.content_type_id].abstract;
-          },
-
           model_title: function (block) {
             var title = '...';
             if (this.model_info[block.content_type_id]) {
@@ -112,23 +104,16 @@
           create_unique_hash: () => Math.random().toString(36).substring(7),
 
           block_admin_url: function (block) {
-            return base_admin_url + 'streamblocks/' + this.model_name(block) + '/';
-          },
-
-          instance_admin_render_url: function (block, instance_id) {
-            return `/streamfield/admin-render/?content_type_id=${ block.content_type_id }&object_id=${ instance_id }`;
-          },
-
-          abstract_block_render_url: function (block) {
-            return '/streamfield/abstract-block/' + this.model_name(block) + '/';
+            return `${ base_admin_url }streamblocks/${ this.model_name(block) }/`;
           },
 
           get_change_model_link: function(block, instance_id) {
-
+            // Fix this to actually use URLParams
             return `${ this.block_admin_url(block) }${ instance_id }/change/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`
           },
 
           get_add_model_link: function (block) {
+            // Fix this to actually use URLParams
             return this.block_admin_url(block) +
               'add/?_popup=1&block_id=' + block.unique_id +
               '&app_id=' + app_node.id;
@@ -136,19 +121,6 @@
 
           getBlockContent: function(block, item_id) {
             return this.blocks[this.instance_unique_id(block, item_id)];
-          },
-
-          getAbstractBlockContent: function(block) {
-            return this.blocks[block.content_type_id];
-          },
-
-          updateAbstractBlock(block_unique_id) {
-            var block = this.stream.find(block => block['unique_id'] == block_unique_id);
-
-            // change block content
-            ax.get(this.abstract_block_render_url(block)).then(
-              response => app.$set(app.blocks, block.content_type_id, response.data)
-            );
           },
 
           updateBlock: function (block_unique_id, instance_id) {
@@ -187,9 +159,7 @@
             if (confirm('"' + this.model_title(block) + '" - ' + stream_texts['deleteBlock'])) {
               this.stream.splice(index, 1);
               // prepare to remove from db
-              if ( !this.isAbstract(block) ) {
-                this.will_removed.push(block);
-              }
+              this.will_removed.push(block);
             }
           },
 

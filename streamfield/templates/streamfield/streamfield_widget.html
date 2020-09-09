@@ -28,7 +28,7 @@
           </span>
         </h3>
 
-        <div v-if="!isAbstract(block)">
+        <div>
           <div v-if="asList(block)" class="stream-model-block__content" :class="model_name(block)" :id="'id_' + block.unique_id">
 
             <draggable v-model="block.id" group="items" handle=".subblock-move">
@@ -74,11 +74,6 @@
                 + {% trans "Add content" %}
               </a>
             </span>
-          </div>
-        </div> <!-- /v-if="isAbstract" -->
-        <div v-else>
-          <div class="stream-model-block__content no-subblocks abstract-block" :class="model_name(block)">
-            <span v-html="getAbstractBlockContent(block)"></span>
           </div>
         </div>
         <div class="stream-block__options" v-if="model_info[block.content_type_id] && !_.isEmpty(model_info[block.content_type_id].options)">

@@ -3,8 +3,7 @@ import collections
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import format_html_join
 from django.template import loader
-
-from .forms import get_form_class
+from django.forms import modelform_factory
 
 
 # TODO Consider collections.namedtuple instead -- it's invalid to set another key, and the ones here are all required
@@ -108,11 +107,12 @@ class StreamItem(collections.UserDict):
             'streamfield/admin/change_form_render_template.html'
         ])
 
+        # TODO Make this a more sane template
         return format_html_join(
             '\n', "{}",
             (
                 (template.render({
-                    'form': get_form_class(model_class)(instance=instance)
+                    'form': modelform_factory(model_class, fields='__all__')(instance=instance)
                 }),
                 ) for instance in self.instances)
         )

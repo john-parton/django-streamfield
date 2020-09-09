@@ -10,9 +10,10 @@ STREAMBLOCKS_APP_PATH = getattr(settings, "STREAMFIELD_STREAMBLOCKS_APP_PATH", "
 try:
     streamblocks_app = import_module("%s.models" % STREAMBLOCKS_APP_PATH)
     STREAMBLOCKS_MODELS = streamblocks_app.STREAMBLOCKS_MODELS
-except (AttributeError, ValueError) as e:
+except (AttributeError, ValueError):
     raise Exception(
-        """Can't find STREAMBLOCKS_MODELS: wrong "STREAMFIELD_STREAMBLOCKS_APP_PATH" or STREAMBLOCKS_MODELS don't exist.""")
+        """Can't find STREAMBLOCKS_MODELS: wrong "STREAMFIELD_STREAMBLOCKS_APP_PATH" or STREAMBLOCKS_MODELS don't exist."""
+    )
 
 
 class StreamBlocksAdmin(admin.ModelAdmin):
@@ -25,10 +26,11 @@ class StreamBlocksAdmin(admin.ModelAdmin):
             to_field = request.POST.get(TO_FIELD_VAR)
             attr = str(to_field) if to_field else opts.pk.attname
             value = obj.serializable_value(attr)
+
             popup_response_data = json.dumps({
                 'app_id': request.POST.get("app_id"),
                 'block_id': request.POST.get("block_id"),
-                'instance_id': str(value),  # Why is this a string here?
+                'instance_id': str(value),  # Why is this a string here? -- probably because it's a string down below
             })
 
             # Why not use render shortcut? or super() ?
@@ -42,18 +44,15 @@ class StreamBlocksAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "block_id" in request.POST:
-            opts = obj._meta
-            to_field = request.POST.get(TO_FIELD_VAR)
-            attr = str(to_field) if to_field else opts.pk.attname
-            value = request.resolver_match.kwargs['object_id']
-            new_value = obj.serializable_value(attr)
-            # Very boilerplate
+
+            # Very boilerplate -- just copy the query params a json back into the template
             popup_response_data = json.dumps({
                 'action': 'change',
                 'app_id': request.POST.get("app_id"),
                 'block_id': request.POST.get("block_id"),
                 'instance_id': request.POST.get("instance_id"),
             })
+
             return TemplateResponse(
                 request, self.popup_response_template, {
                     'popup_response_data': popup_response_data,
@@ -70,6 +69,7 @@ class StreamBlocksAdmin(admin.ModelAdmin):
                 'block_id': request.POST.get("block_id"),
                 'instance_id': request.POST.get("instance_id"),
             })
+
             return TemplateResponse(request, self.popup_response_template, {
                 'popup_response_data': popup_response_data,
             })

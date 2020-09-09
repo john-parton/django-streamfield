@@ -5,8 +5,8 @@ from django.http import JsonResponse
 from django.http import Http404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.contenttypes.models import ContentType
+from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
-
 from django.views.generic.edit import ModelFormMixin
 
 
