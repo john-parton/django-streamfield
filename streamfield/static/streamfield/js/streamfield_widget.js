@@ -103,6 +103,12 @@
 
           create_unique_hash: () => Math.random().toString(36).substring(7),
 
+          hasOptions: function (block) {
+            return Object.keys(
+                this.model_info[block.content_type_id].options
+            ).length > 0;
+          },
+
           block_admin_url: function (block) {
             return `${ base_admin_url }streamblocks/${ this.model_name(block) }/`;
           },

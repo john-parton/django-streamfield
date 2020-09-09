@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.urls import reverse_lazy
 
+# Consider removing this
 BLOCK_OPTIONS = getattr(settings, "STREAMFIELD_BLOCK_OPTIONS", {})
 SHOW_ADMIN_HELP_TEXT = getattr(settings, "STREAMFIELD_SHOW_ADMIN_HELP_TEXT", True)
 # Consider flipping this one
