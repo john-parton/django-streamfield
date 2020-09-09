@@ -66,7 +66,8 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
         attrs['show_admin_help_text'] = SHOW_ADMIN_HELP_TEXT
         attrs['delete_blocks_from_db'] = DELETE_BLOCKS_FROM_DB
         attrs['base_admin_url'] = BASE_ADMIN_URL
-        attrs['data-popup_size'] = json.dumps(self.popup_size)  # Just make this popup_size_width and popup_size_height or something
+        # Just make this popup_size_width and popup_size_height or something
+        attrs['data-popup_size'] = json.dumps(self.popup_size)
 
         return attrs
 
@@ -113,7 +114,6 @@ class StreamField(models.JSONField):
     #     return StreamList(
     #         StreamItem(item) for item in value
     #     )
-
 
     def formfield(self, **kwargs):
         # This is a fairly standard way to set up some defaults

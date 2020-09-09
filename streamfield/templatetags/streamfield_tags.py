@@ -46,11 +46,11 @@ def format_field(field):
                 if obj[0] == field.value():
                     field.obj = obj[1]
 
-
     return t.render({
         'field': field,
         'is_image': isinstance(field, forms.ImageField),
     })
+
 
 def get_widget_name(field):
     return get_valid_filename(

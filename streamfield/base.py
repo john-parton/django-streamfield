@@ -114,10 +114,10 @@ class StreamItem(collections.UserDict):
         ])
 
         return format_html_join(
-                '\n', "{}",
-                (
-                    (template.render({
-                        'form': get_form_class(model_class)(instance=instance)
-                        }),
+            '\n', "{}",
+            (
+                (template.render({
+                    'form': get_form_class(model_class)(instance=instance)
+                }),
                 ) for instance in self.instances)
-            )
+        )
