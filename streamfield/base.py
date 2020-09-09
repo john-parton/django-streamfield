@@ -101,3 +101,22 @@ class StreamItem(collections.UserDict):
 
         # Need to unwrap template to get real django template... not sure it's the best pattern here
         return template.template, context
+
+    # Not a fan of this here
+    # Difficult to understand and customize
+    def _render_admin(self):
+        model_class = self.model_class()
+
+        template = loader.select_template([
+            f'streamblocks/admin/{model_class._meta.model_name}.html',
+            'streamfield/admin/change_form_render_template.html'
+        ])
+
+        return format_html_join(
+                '\n', "{}",
+                (
+                    (template.render({
+                        'form': get_form_class(model_class)(instance=instance)
+                        }),
+                ) for instance in self.instances)
+            )

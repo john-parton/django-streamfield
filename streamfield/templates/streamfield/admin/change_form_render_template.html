@@ -5,7 +5,7 @@
   {% for f in form %}
     {% if f.value %}
       <div class="block-fields__field-{{ f.name }}">
-        <span class="block-fields__label">{{ f.label }}:</span>
+        <div class="block-fields__label">{{ f.label }}:</div>
         {% format_field f %}
       </div>
     {% endif %}
