@@ -124,10 +124,8 @@
           },
 
           get_change_model_link: function(block, instance_id) {
-            return this.block_admin_url(block) + instance_id +
-              '/change/?_popup=1&block_id=' + block.unique_id +
-              '&instance_id=' + instance_id +
-              '&app_id=' + app_node.id;
+
+            return `${ this.block_admin_url(block) }${ instance_id }/change/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`
           },
 
           get_add_model_link: function (block) {
@@ -217,13 +215,19 @@
           },
 
           addNewBlock: function(block, content_type_id) {
+            console.log('test');
             content_type_id = parseInt(content_type_id);
 
             var options = {};
             var new_block;
 
+            console.log(Object.entries(this.model_info[content_type_id].options));
+
             Object.entries(this.model_info[content_type_id].options).forEach(
-              ([key, option]) => app.$set(options, key, option.default)
+              ([key, option]) => {
+                  console.log(key, option);
+                  app.$set(options, key, option.default);
+              }
             );
 
             new_block = {
@@ -233,8 +237,15 @@
               object_id: []
             };
 
+            console.log(new_block);
+
             this.stream.push(new_block);
+
+            console.log('pushed')
+
             this.show_add_block = false;
+
+            console.log('show_add_block');
           },
 
           openPopup: function(e){

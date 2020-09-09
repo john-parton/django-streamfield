@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from . import views
 
 STREAMBLOCKS_APP_PATH = getattr(settings, "STREAMFIELD_STREAMBLOCKS_APP_PATH", "streamblocks")
+
 try:
     streamblocks_app = import_module("%s.models" % STREAMBLOCKS_APP_PATH)
     STREAMBLOCKS_MODELS = streamblocks_app.STREAMBLOCKS_MODELS
@@ -17,10 +18,10 @@ admin_instance_urls = []
 for model in STREAMBLOCKS_MODELS:
     if not model._meta.abstract:
         block_path = path(
-                'admin-instance/%s/<int:pk>' % model.__name__.lower(),
-                login_required(views.admin_instance_class(model).as_view()),
-                name='admin-instance'
-            )
+            'admin-instance/%s/<int:pk>' % model.__name__.lower(),
+            login_required(views.admin_instance_class(model).as_view()),
+            name='admin-instance'
+        )
     else:
         block_path = path(
             'abstract-block/%s/' % model.__name__.lower(),

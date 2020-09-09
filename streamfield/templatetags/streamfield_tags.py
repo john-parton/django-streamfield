@@ -1,8 +1,10 @@
+import operator as op
+
 from django import template
 from django.utils.text import (
     get_valid_filename,
     camel_case_to_spaces
-    )
+)
 from django.utils.safestring import mark_safe
 from django.template import loader
 
@@ -43,6 +45,17 @@ def get_widget_name(field):
         camel_case_to_spaces(field.field.widget.__class__.__name__)
     )
 
-@register.simple_tag
-def stream_render(stream_obj, **kwargs):
-    return stream_obj._render(kwargs)
+
+@register.simple_tag(takes_context=True)
+def render_stream(context, stream_list, admin=False):
+    chunks = []
+
+    for template, item_context in map(op.methodcaller('get_template_context'), stream_list):
+        with context.push(**item_context):
+            chunks.append(
+                template.render(context)
+            )
+
+    return mark_safe(
+        "".join(chunks)
+    )
