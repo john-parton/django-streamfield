@@ -6,7 +6,7 @@ from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.urls import reverse
-from .base import StreamList, StreamItem
+from .base import StreamItem
 from .settings import (
     BLOCK_OPTIONS,
     SHOW_ADMIN_HELP_TEXT,
@@ -72,7 +72,7 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
         return attrs
 
     def prepare_value(self, value):
-        if isinstance(value, StreamList):
+        if isinstance(value, list):
             value = [
                 dict(item) for item in value
             ]
@@ -87,7 +87,7 @@ class StreamField(models.JSONField):
         self.model_list = kwargs.pop('model_list', None)
 
         kwargs['blank'] = True
-        kwargs['default'] = StreamList
+        kwargs['default'] = list
 
         super().__init__(*args, **kwargs)
 
@@ -97,9 +97,9 @@ class StreamField(models.JSONField):
         if isinstance(value, str):
             value = json.loads(value)
 
-        return StreamList(
+        return [
             StreamItem(item) for item in value
-        )
+        ]
 
     # def to_python(self, value):
     #     if isinstance(value, StreamList):
