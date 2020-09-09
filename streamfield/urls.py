@@ -5,26 +5,6 @@ from django.contrib.auth.decorators import login_required
 
 from . import views
 
-STREAMBLOCKS_APP_PATH = getattr(settings, "STREAMFIELD_STREAMBLOCKS_APP_PATH", "streamblocks")
-
-try:
-    streamblocks_app = import_module("%s.models" % STREAMBLOCKS_APP_PATH)
-    STREAMBLOCKS_MODELS = streamblocks_app.STREAMBLOCKS_MODELS
-except (AttributeError, ValueError) as e:
-    raise Exception("""Can't find STREAMBLOCKS_MODELS: wrong "STREAMFIELD_STREAMBLOCKS_APP_PATH" or STREAMBLOCKS_MODELS don't exist.""")
-
-admin_instance_urls = []
-
-for model in STREAMBLOCKS_MODELS:
-    if model._meta.abstract:
-        block_path = path(
-            'abstract-block/%s/' % model.__name__.lower(),
-            login_required(views.abstract_block_class(model).as_view()),
-            name='abstract-block'
-        )
-
-    admin_instance_urls.append(block_path)
-
 urlpatterns = [
     path(
         'admin-render/',
@@ -35,6 +15,5 @@ urlpatterns = [
         'admin-instance/<model_name>/<int:pk>/delete/',
         login_required(views.delete_instance),
         name='admin-instance-delete'
-    ),
-    *admin_instance_urls
+    )
 ]

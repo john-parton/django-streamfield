@@ -1,0 +1,28 @@
+[flake8]
+max-line-length = 119
+exclude =
+    migrations,
+    manage.py
+# ignore = D100,D101,D102,D103,D104,D105
+ignore  =
+    D100,
+    D101,
+    D102,
+    D103,
+    D104,
+    D105,
+    D106,
+    D107,
+    D200,
+    D202,
+    D204,
+    D205,
+    D208,
+    D209,
+    D210,
+    D211,
+    D300,
+    D400,
+    D401,
+    D403,
+    D413

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import modelform_factory
 from django.template import loader
 from django.http import JsonResponse
 from django.http import Http404
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic import DetailView, TemplateView
 from .forms import get_form_class
@@ -10,6 +12,8 @@ from .forms import get_form_class
 from django.views.generic.edit import ModelFormMixin
 
 
+# TODO Consider checking a more granular permission?
+@method_decorator(staff_member_required, name='dispatch')
 class RenderWidgetView(ModelFormMixin, DetailView):
 
     @property
@@ -22,7 +26,10 @@ class RenderWidgetView(ModelFormMixin, DetailView):
         except ContentType.DoesNotExist:
             raise Http404
 
-        return content_type.get_object_for_this_type(pk=self.request.GET.get('object_id'))
+        try:
+            return content_type.get_object_for_this_type(pk=self.request.GET.get('object_id'))
+        except ObjectDoesNotExist:
+            raise Http404
 
     def get_template_names(self):
         model = self.object.__class__
@@ -43,27 +50,9 @@ class RenderWidgetView(ModelFormMixin, DetailView):
         return context_data
 
 
-
-def abstract_block_class(model, base=TemplateView):
-
-    if hasattr(model, 'custom_admin_template'):
-        tmpl_name = model.custom_admin_template
-    else:
-        tmpl = loader.select_template([
-            'streamblocks/admin/%s.html' % model.__name__.lower(),
-            'streamfield/admin/abstract_block_template.html'
-        ])
-        tmpl_name = tmpl.template.name
-
-    return type(
-        str(model.__name__ + 'TemplateView'), (base, ), {
-            'model': model,
-            'template_name': tmpl_name,
-        }
-    )
-
-
+@staff_member_required
 def delete_instance(request, model_name, pk):
+    raise Exception("Test this better")
     t = ContentType.objects.get(app_label='streamblocks', model=model_name)
     obj = t.get_object_for_this_type(pk=pk)
     if request.method == 'DELETE':

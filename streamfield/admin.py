@@ -13,6 +13,7 @@ try:
 except (AttributeError, ValueError) as e:
     raise Exception("""Can't find STREAMBLOCKS_MODELS: wrong "STREAMFIELD_STREAMBLOCKS_APP_PATH" or STREAMBLOCKS_MODELS don't exist.""")
 
+
 class StreamBlocksAdmin(admin.ModelAdmin):
     change_form_template = 'streamfield/admin/change_form.html'
     popup_response_template = 'streamfield/admin/streamfield_popup_response.html'

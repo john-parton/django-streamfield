@@ -48,7 +48,7 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
 
         for model in self.model_list:
             as_list = getattr(model, "as_list", False)
-            options = getattr(model, "options", BLOCK_OPTIONS)
+            options = getattr(model, "options", BLOCK_OPTIONS)  # Why is the necessary?
 
             model_doc = model._meta.verbose_name_plural if as_list else model._meta.verbose_name
 
@@ -56,7 +56,6 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
 
             model_list_info[content_type.id] = {
                 'verbose_name': str(model_doc),
-                'abstract': model._meta.abstract,
                 'as_list': as_list,
                 'options': options,
                 'model_name': model._meta.model_name
@@ -84,9 +83,11 @@ class StreamField(models.JSONField):
     description = "StreamField"
 
     def __init__(self, *args, **kwargs):
+        # TODO Actually load/validate model list?
+        # TODO Allow strings to lazily load models like the ForeignKey field
         self.model_list = kwargs.pop('model_list', None)
 
-        kwargs['blank'] = True
+        kwargs['blank'] = True  # Why?
         kwargs['default'] = list
 
         super().__init__(*args, **kwargs)

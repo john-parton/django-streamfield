@@ -116,7 +116,7 @@
           },
 
           instance_admin_render_url: function (block, instance_id) {
-            return `/streamfield/admin-instance-test/?content_type_id=${ block.content_type_id }&object_id=${ instance_id }`;
+            return `/streamfield/admin-render/?content_type_id=${ block.content_type_id }&object_id=${ instance_id }`;
           },
 
           abstract_block_render_url: function (block) {
@@ -157,9 +157,15 @@
 
             var block = this.stream.find(block => block['unique_id'] == block_unique_id);
 
+
             // change block content
             ax.get(
-              this.instance_admin_render_url(block, instance_id)
+              '/streamfield/admin-render/', {
+                'params': {
+                  content_type_id: block.content_type_id,
+                  object_id: instance_id
+                }
+              }
             ).then(
               response => app.$set(app.blocks, app.instance_unique_id(block, instance_id), response.data)
             );

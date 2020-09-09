@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from .forms import get_form_class
 
 
+# TODO Consider collections.namedtuple instead -- it's invalid to set another key, and the ones here are all required
 class StreamItem(collections.UserDict):
     # Always has the following keys
     # unique_id: str
