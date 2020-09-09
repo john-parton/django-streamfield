@@ -63,14 +63,14 @@
                 if ( app.will_removed[i].id != -1 ) {
 
                   // for array
-                  if ( Array.isArray(app.will_removed[i].id) ) {
-                    var ids = app.will_removed[i].id;
+                  if ( Array.isArray(app.will_removed[i].object_id) ) {
+                    var ids = app.will_removed[i].object_id;
                     for (var j = ids.length - 1; j >= 0; j--) {
                       all_requests.push(app.deleteAction(app.will_removed[i], ids[j], i));
                     }
                   // for one
                   } else {
-                    all_requests.push(app.deleteAction(app.will_removed[i], app.will_removed[i].id, i));
+                    all_requests.push(app.deleteAction(app.will_removed[i], app.will_removed[i].object_id, i));
                   }
                 }
               }
@@ -111,26 +111,26 @@
 
           create_unique_hash: () => Math.random().toString(36).substring(7),
 
-          block_admin_url: function(block) {
+          block_admin_url: function (block) {
             return base_admin_url + 'streamblocks/' + this.model_name(block) + '/';
           },
 
-          instance_admin_render_url: function(block, instance_id) {
+          instance_admin_render_url: function (block, instance_id) {
             return '/streamfield/admin-instance/' + this.model_name(block) + '/' + instance_id;
           },
 
-          abstract_block_render_url: function(block) {
+          abstract_block_render_url: function (block) {
             return '/streamfield/abstract-block/' + this.model_name(block) + '/';
           },
 
-          get_change_model_link: function(block, instance_id){
+          get_change_model_link: function(block, instance_id) {
             return this.block_admin_url(block) + instance_id +
               '/change/?_popup=1&block_id=' + block.unique_id +
               '&instance_id=' + instance_id +
               '&app_id=' + app_node.id;
           },
 
-          get_add_model_link: function(block){
+          get_add_model_link: function (block) {
             return this.block_admin_url(block) +
               'add/?_popup=1&block_id=' + block.unique_id +
               '&app_id=' + app_node.id;
@@ -145,7 +145,7 @@
           },
 
           updateAbstractBlock(block_unique_id) {
-            var block = _.find(this.stream, ['unique_id', block_unique_id]);
+            var block = this.stream.find(block => block['unique_id'] == block_unique_id);
 
             // change block content
             ax.get(this.abstract_block_render_url(block)).then(
@@ -157,7 +157,7 @@
             // Ensure always an integer... better place to put this?
             instance_id = parseInt(instance_id);
 
-            var block = _.find(this.stream, ['unique_id', block_unique_id]);
+            var block = this.stream.find(block => block['unique_id'] == block_unique_id);
 
             // change block content
             ax.get(
@@ -172,35 +172,41 @@
           },
 
           deleteBlock: function(block_unique_id) {
-            var block = _.find(this.stream, ['unique_id', block_unique_id]);
-            var index = this.stream.indexOf(block);
+            var index = this.stream.findIndex(block => block['unique_id'] == unique_id);
+
+            if (index == -1) {
+              return;
+            }
+
+            var block = this.stream[index];
+
             if (confirm('"' + this.model_title(block) + '" - ' + stream_texts['deleteBlock'])) {
-              if (index != -1) {
-                this.stream.splice(index, 1);
-                // prepare to remove from db
-                if ( !this.isAbstract(block)) {
-                  this.will_removed.push(block);
-                }
+              this.stream.splice(index, 1);
+              // prepare to remove from db
+              if ( !this.isAbstract(block) ) {
+                this.will_removed.push(block);
               }
             }
           },
 
           deleteInstance: function(block_unique_id, instance_id) {
-            var block = _.find(this.stream, ['unique_id', block_unique_id]);
-            var block_index = this.stream.indexOf(block);
+            var index = this.stream.findIndex(block => block['unique_id'] == unique_id);
+
+            if (index == -1) {
+              return;
+            }
+
+            var block = this.stream[index];
 
             if (confirm(stream_texts['deleteInstance'])) {
-              if (block_index != -1) {
-                // remove from block id
-                block.id.splice(block.id.indexOf(instance_id), 1);
+              // remove from block id
+              block.id.splice(block.id.indexOf(instance_id), 1);
 
-                // prepare to remove from db
-                this.will_removed.push({
-                  content_type_id: block.content_type_id,
-                  id: instance_id
-                });
-
-              }
+              // prepare to remove from db
+              this.will_removed.push({
+                content_type_id: block.content_type_id,
+                object_id: instance_id
+              });
             }
           },
 
@@ -216,9 +222,9 @@
             var options = {};
             var new_block;
 
-            _.forEach(this.model_info[content_type_id].options, function(option, key) {
-              app.$set(options, key, option.default);
-            });
+            Object.entries(this.model_info[content_type_id].options).forEach(
+              ([key, option]) => app.$set(options, key, option.default)
+            );
 
             new_block = {
               unique_id: this.create_unique_hash(),

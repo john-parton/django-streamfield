@@ -23,7 +23,6 @@ class StreamWidget(forms.Widget):
             'all': ('streamfield/css/streamfield_widget.css', )
         }
         js = (
-            'streamfield/vendor/lodash.min.js',
             'streamfield/vendor/js.cookie.js',
             'streamfield/vendor/vue.js',  # TODO Use min
             'streamfield/vendor/Sortable.min.js',
