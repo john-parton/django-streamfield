@@ -1,11 +1,8 @@
 import json
 
-from copy import deepcopy
 from django.db import models
 from django import forms
 from django.contrib.contenttypes.models import ContentType
-from django.conf import settings
-from django.urls import reverse
 from .base import StreamItem
 from .settings import (
     BLOCK_OPTIONS,

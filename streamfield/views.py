@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import modelform_factory
-from django.template import loader
 from django.http import JsonResponse
 from django.http import Http404
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.contenttypes.models import ContentType
-from django.views.generic import DetailView, TemplateView
-from .forms import get_form_class
+from django.views.generic import DetailView
 
 from django.views.generic.edit import ModelFormMixin
 
