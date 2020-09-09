@@ -1,4 +1,5 @@
 (function(w, $) {
+  /* wtf does this do? */
   function id_to_windowname(text) {
     text = text.replace(/\./g, '__dot__');
     text = text.replace(/\-/g, '__dash__');
@@ -28,7 +29,7 @@
         blocks: {}, // save content of all instances
         show_help: false,
         show_add_block: false,
-        will_removed: [] // blocks that will be removed from db
+        to_delete: [] // blocks that will be removed from db
       };
 
       console.log(data.model_info);
@@ -48,31 +49,21 @@
 
           // delete removed instances from db when form submit
           if ( delete_blocks_from_db ) {
-            $('input[type="submit"]', text_area.closest('form')).on('click', function(e){
-              if ( !app.will_removed.length ) return;
+            // TODO Remove jquery
+            $('input[type="submit"]', text_area.closest('form')).on('click', function (e) {
+              if ( !app.to_delete.length ) return;
 
               e.preventDefault();
 
               var all_requests = [];
 
-              for (var i = app.will_removed.length - 1; i >= 0; i--) {
-                if ( app.will_removed[i].id != -1 ) {
-
-                  // for array
-                  if ( Array.isArray(app.will_removed[i].object_id) ) {
-                    var ids = app.will_removed[i].object_id;
-                    for (var j = ids.length - 1; j >= 0; j--) {
-                      all_requests.push(app.deleteAction(app.will_removed[i], ids[j], i));
-                    }
-                  // for one
-                  } else {
-                    all_requests.push(app.deleteAction(app.will_removed[i], app.will_removed[i].object_id, i));
-                  }
-                }
-              }
+              // could map directly in Promise.all
+              app.to_delete.forEach(({content_type_id, object_id}) => {
+                all_requests.push(app.deleteAction(content_type_id, object_id))  // why app and not this?
+              });
 
               Promise.all(all_requests).then(function(){
-                app.will_removed = [];
+                app.to_delete = [];
                 $(e.target).trigger('click');
               });
 
@@ -88,11 +79,7 @@
           },
 
           model_title: function (block) {
-            var title = '...';
-            if (this.model_info[block.content_type_id]) {
-              title = this.model_info[block.content_type_id].model_doc;
-            }
-            return title;
+            return this.model_info[block.content_type_id].verbose_name;
           },
 
           model_name: function (block) {
@@ -153,8 +140,8 @@
             }
           },
 
-          deleteBlock: function(block_unique_id) {
-            var index = this.stream.findIndex(block => block['unique_id'] == unique_id);
+          deleteBlock: function (block_unique_id) {
+            var index = this.stream.findIndex(block => block['unique_id'] == block_unique_id);
 
             if (index == -1) {
               return;
@@ -165,7 +152,15 @@
             if (confirm('"' + this.model_title(block) + '" - ' + stream_texts['deleteBlock'])) {
               this.stream.splice(index, 1);
               // prepare to remove from db
-              this.will_removed.push(block);
+
+              // map/extend would work too
+              block.object_id.forEach(
+                object_id => this.to_delete.push({
+                  content_type_id: block.content_type_id,
+                  object_id: object_id
+                })
+              )
+
             }
           },
 
@@ -180,62 +175,60 @@
 
             if (confirm(stream_texts['deleteInstance'])) {
               // remove from block id
-              block.id.splice(block.id.indexOf(instance_id), 1);
+              block.object_id.splice(
+                block.object_id.indexOf(instance_id), 1
+              );
 
               // prepare to remove from db
-              this.will_removed.push({
+              this.to_delete.push({
                 content_type_id: block.content_type_id,
                 object_id: instance_id
               });
             }
           },
 
-          deleteAction: function(block, id, idx) {
+          deleteAction: function (content_type_id, object_id) {
+            // Would be better to have the server set the callback url
+            var model_name = this.model_info[block.content_type_id].model_name;
+
+            // TODO Test this better
+            // TODO Consider /streamfield/delete/ with query params instead
+            // This is rather dangerous -- deletes things with minimal confirmation
             return ax.delete(
-              '/streamfield/admin-instance/' + app.model_name(block) + '/' + id + '/delete/'
+              `/streamfield/admin-instance/${ model_name }/${ object_id }/delete/`
             )
           },
 
-          addNewBlock: function(block, content_type_id) {
-            console.log('test');
+          addNewBlock: function (block, content_type_id) {
+            // Sometimes a string for some reason?
             content_type_id = parseInt(content_type_id);
 
             var options = {};
-            var new_block;
 
-            console.log(Object.entries(this.model_info[content_type_id].options));
-
+            // Don't fully understand this
             Object.entries(this.model_info[content_type_id].options).forEach(
               ([key, option]) => {
-                  console.log(key, option);
                   app.$set(options, key, option.default);
               }
             );
 
-            new_block = {
+            this.stream.push({
               unique_id: this.create_unique_hash(),
               content_type_id: content_type_id,
               options: options,
               object_id: []
-            };
-
-            console.log(new_block);
-
-            this.stream.push(new_block);
-
-            console.log('pushed')
+            });
 
             this.show_add_block = false;
-
-            console.log('show_add_block');
           },
 
-          openPopup: function(e){
-            var triggeringLink = e.target;
-            var name = id_to_windowname(triggeringLink.id.replace(/^(change|add|delete)_/, ''));
-            var href = triggeringLink.href;
-            var win = w.open(href, name, 'height=' + popup_size[1] + ',width=' + popup_size[0] + ',resizable=yes,scrollbars=yes');
-            win.focus();
+          openPopup: ({target}) => {
+            w.open(
+              target.href,
+              id_to_windowname(target.id.replace(/^(change|add|delete)_/, '')),
+              `height=${ popup_size[1]},width=${ popup_size[0] },resizable=yes,scrollbars=yes`
+            ).focus();
+
             return false;
           }
         },

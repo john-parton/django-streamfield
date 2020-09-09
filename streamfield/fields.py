@@ -20,7 +20,6 @@ class StreamWidget(forms.Widget):
             'all': ('streamfield/css/streamfield_widget.css', )
         }
         js = (
-            'streamfield/vendor/lodash.min.js',
             'streamfield/vendor/js.cookie.js',
             'streamfield/vendor/vue.js',  # TODO Use min
             'streamfield/vendor/Sortable.min.js',
@@ -47,12 +46,10 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
             as_list = getattr(model, "as_list", False)
             options = getattr(model, "options", BLOCK_OPTIONS)  # Why is the necessary?
 
-            model_doc = model._meta.verbose_name_plural if as_list else model._meta.verbose_name
-
             content_type = ContentType.objects.get_for_model(model)
 
             model_list_info[content_type.id] = {
-                'verbose_name': str(model_doc),
+                'verbose_name': str(model._meta.verbose_name_plural if as_list else model._meta.verbose_name),
                 'as_list': as_list,
                 'options': options,
                 'model_name': model._meta.model_name
