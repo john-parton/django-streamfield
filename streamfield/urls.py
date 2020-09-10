@@ -2,15 +2,17 @@ from django.urls import path
 
 from . import views
 
+app_name = 'streamfield'
+
 urlpatterns = [
     path(
         'render/',
         views.RenderWidgetView.as_view(),
-        name='streamview-render'
+        name='admin-render'
     ),
     path(
         'delete/',
         views.DeleteAnyView.as_view(),
-        name='streamview-delete'
+        name='delete'
     )
 ]

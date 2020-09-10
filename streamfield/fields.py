@@ -1,14 +1,17 @@
 import json
 
-from django.db import models
 from django import forms
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.urls import reverse
+from django.utils.functional import cached_property, SimpleLazyObject
+
 from .base import StreamItem
 from .settings import (
     BLOCK_OPTIONS,
     SHOW_ADMIN_HELP_TEXT,
-    DELETE_BLOCKS_FROM_DB,
-    BASE_ADMIN_URL
+    DELETE_BLOCKS_FROM_DB
 )
 
 
@@ -37,31 +40,38 @@ class StreamForm(forms.JSONField):  # Make name better, move to "fields" module
         self.popup_size = kwargs.pop('popup_size', (1000, 500))
         super().__init__(**kwargs)
 
-    def widget_attrs(self, widget):
-        attrs = super().widget_attrs(widget)
-
+    def get_model_list_info(self):
         model_list_info = {}
 
         for model in self.model_list:
+            opts = model._meta
+
             as_list = getattr(model, "as_list", False)
             options = getattr(model, "options", BLOCK_OPTIONS)  # Why is the necessary?
 
             content_type = ContentType.objects.get_for_model(model)
 
             model_list_info[content_type.id] = {
-                'verbose_name': str(model._meta.verbose_name_plural if as_list else model._meta.verbose_name),
+                'verbose_name': str(opts.verbose_name_plural if as_list else opts.verbose_name),
                 'as_list': as_list,
                 'options': options,
-                'model_name': model._meta.model_name
+                'model_name': model._meta.model_name,
+                'admin_url': reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
             }
 
-        attrs['model_list_info'] = json.dumps(model_list_info)
+        return json.dumps(model_list_info)
+
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+
+        attrs['model_list_info'] = SimpleLazyObject(self.get_model_list_info)
         # Move these elsewhere, this isn't the right place for them
         attrs['show_admin_help_text'] = SHOW_ADMIN_HELP_TEXT
         attrs['delete_blocks_from_db'] = DELETE_BLOCKS_FROM_DB
-        attrs['base_admin_url'] = BASE_ADMIN_URL
         # Just make this popup_size_width and popup_size_height or something
         attrs['data-popup_size'] = json.dumps(self.popup_size)
+
 
         return attrs
 
@@ -78,9 +88,8 @@ class StreamField(models.JSONField):
     description = "StreamField"
 
     def __init__(self, *args, **kwargs):
-        # TODO Actually load/validate model list?
-        # TODO Allow strings to lazily load models like the ForeignKey field
-        self.model_list = kwargs.pop('model_list', None)
+
+        self._model_list = kwargs.pop('model_list', ())
 
         kwargs['blank'] = True  # Why?
         kwargs['default'] = list
@@ -97,17 +106,21 @@ class StreamField(models.JSONField):
             StreamItem(item) for item in value
         ]
 
-    # def to_python(self, value):
-    #     if isinstance(value, StreamList):
-    #         return value
-    #
-    #     # Not totally sure why this would happen?
-    #     if isinstance(value, str):
-    #         value = json.loads(value)
-    #
-    #     return StreamList(
-    #         StreamItem(item) for item in value
-    #     )
+    # Not sure this could be more easily accomplished with a LazyObject
+    @cached_property
+    def model_list(self):
+        model_list = []
+
+        for elem in self._model_list:
+            # Duck type models
+            if hasattr(elem, '_meta') and hasattr(elem._meta, 'model_name'):
+                model_list.append(elem)
+            else:
+                model_list.append(
+                    apps.get_model(elem)
+                )
+
+        return model_list
 
     def formfield(self, **kwargs):
         # This is a fairly standard way to set up some defaults

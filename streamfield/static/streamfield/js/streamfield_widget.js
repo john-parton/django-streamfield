@@ -16,12 +16,17 @@
     w.streamapps = {};
 
     document.querySelectorAll('.streamfield_app').forEach(app_node => {
+
       var text_area = app_node.querySelector('textarea');
       var initial_data = text_area.innerHTML;
       var model_list_info = text_area.getAttribute('model_list_info');
       var delete_blocks_from_db = Boolean(text_area.hasAttribute('delete_blocks_from_db'));
-      var base_admin_url = text_area.getAttribute('base_admin_url');
       var popup_size = JSON.parse(text_area.dataset.popup_size);
+
+      var config = text_area.dataset;
+      var base_admin_url = config.base_admin_url;
+
+      console.log(config.delete_url);
 
       var data = {
         stream: JSON.parse(initial_data), // [{model_name: ..., id: ...}, ...]
@@ -95,7 +100,7 @@
           },
 
           block_admin_url: function (block) {
-            return `${ base_admin_url }streamblocks/${ this.model_name(block) }/`;
+            return this.model_info[block.content_type_id].admin_url;
           },
 
           get_change_model_link: function(block, instance_id) {
@@ -123,7 +128,7 @@
 
             // change block content
             ax.get(
-              '/streamfield/render/', {
+              config.render_url, {
                 'params': {
                   content_type_id: block.content_type_id,
                   object_id: instance_id
@@ -147,7 +152,7 @@
 
             var block = this.stream[index];
 
-            if (confirm('"' + this.model_title(block) + '" - ' + stream_texts['deleteBlock'])) {
+            if (confirm(`"${ this.model_title(block) }" - ${ stream_texts['deleteBlock'] }`)) {
               this.stream.splice(index, 1);
               // prepare to remove from db
 
@@ -189,7 +194,7 @@
           // TODO Consider /streamfield/delete/ with query params instead
           // This is rather dangerous -- deletes things with minimal confirmation
           deleteAction: (content_type_id, object_id) => ax.delete(
-            '/streamfield/delete/', {
+            config.delete_url, {
               'params': {
                 content_type_id: content_type_id,
                 object_id: object_id

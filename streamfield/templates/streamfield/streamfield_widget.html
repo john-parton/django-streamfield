@@ -100,5 +100,12 @@
     </div>
   </div>
 
-  <textarea v-text="textarea" name="{{ widget.name }}"{% include 'django/forms/widgets/attrs.html' %}>{% if widget.value %}{{ widget.value }}{% endif %}</textarea>
+  <textarea
+    v-text="textarea" name="{{ widget.name }}" data-render_url="{% url 'streamfield:admin-render' %}"
+    data-delete_url="{% url 'streamfield:delete' %}" data-base_admin_url="{% url 'admin:index' %}"
+    {% include 'django/forms/widgets/attrs.html' %}>
+
+    {% if widget.value %}{{ widget.value }}{% endif %}
+
+  </textarea>
 </div>
