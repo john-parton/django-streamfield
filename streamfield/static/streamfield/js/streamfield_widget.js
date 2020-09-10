@@ -123,7 +123,7 @@
 
             // change block content
             ax.get(
-              '/streamfield/admin-render/', {
+              '/streamfield/render/', {
                 'params': {
                   content_type_id: block.content_type_id,
                   object_id: instance_id
@@ -185,17 +185,17 @@
             }
           },
 
-          deleteAction: function (content_type_id, object_id) {
-            // Would be better to have the server set the callback url
-            var model_name = this.model_info[block.content_type_id].model_name;
-
-            // TODO Test this better
-            // TODO Consider /streamfield/delete/ with query params instead
-            // This is rather dangerous -- deletes things with minimal confirmation
-            return ax.delete(
-              `/streamfield/admin-instance/${ model_name }/${ object_id }/delete/`
-            )
-          },
+          // TODO Test this better
+          // TODO Consider /streamfield/delete/ with query params instead
+          // This is rather dangerous -- deletes things with minimal confirmation
+          deleteAction: (content_type_id, object_id) => ax.delete(
+            '/streamfield/delete/', {
+              'params': {
+                content_type_id: content_type_id,
+                object_id: object_id
+              }
+            }
+          ),
 
           addNewBlock: function (block, content_type_id) {
             // Sometimes a string for some reason?
