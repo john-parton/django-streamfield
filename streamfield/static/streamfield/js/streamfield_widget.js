@@ -32,8 +32,6 @@
         to_delete: [] // blocks that will be removed from db
       };
 
-      console.log(data.model_info);
-
       var app = new Vue({
         el: app_node,
         data: data,
