@@ -28,7 +28,7 @@
           </span>
         </h3>
 
-        <div v-if="asList(block)" class="stream-model-block__content" :class="model_name(block)" :id="'id_' + block.unique_id">
+        <div v-if="asList(block)" class="stream-model-block__content" :id="'id_' + block.unique_id">
 
           <draggable v-model="block.id" group="items" handle=".subblock-move">
             <span v-for="item_id in block.object_id" class="stream-model-subblock">
@@ -54,7 +54,7 @@
           </a>
         </div>
 
-        <div v-else class="stream-model-block__content no-subblocks" :class="model_name(block)">
+        <div v-else class="stream-model-block__content no-subblocks">
           <span v-for="item_id in block.object_id">
             <span class="model-field-content" :id="'id_' + instance_unique_id(block, item_id)" v-html="getBlockContent(block, item_id)"></span>
 
@@ -76,7 +76,7 @@
         </div>
 
         <div class="stream-block__options" v-if="hasOptions(block)">
-          <div class="stream-block__option" v-for="(option, key) in model_info[block.content_type_id].options">
+          <div class="stream-block__option" v-for="(option, key) in model_metadata[block.content_type_id].options">
             <template v-if="option.type == 'checkbox'">
               <span v-text="option.label"></span>: <input type="checkbox" v-model="block.options[key]">
             </template>
@@ -93,7 +93,7 @@
     <div class="stream-insert-new-block">
       <div class="add-new-block-button" @click="show_add_block=!show_add_block">+ {% trans "Add new block" %}</div>
       <ul v-if="show_add_block">
-        <li v-for="(block, content_type_id) in model_info">
+        <li v-for="(block, content_type_id) in model_metadata">
           <a class="stream-btn" href="#" v-text="'+ ' + block.verbose_name" @click.prevent="addNewBlock(block, content_type_id)"></a>
         </li>
       </ul>

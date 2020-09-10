@@ -17,20 +17,16 @@
 
     document.querySelectorAll('.streamfield_app').forEach(app_node => {
 
-      var text_area = app_node.querySelector('textarea');
-      var initial_data = text_area.innerHTML;
-      var model_list_info = text_area.getAttribute('model_list_info');
-      var delete_blocks_from_db = Boolean(text_area.hasAttribute('delete_blocks_from_db'));
-      var popup_size = JSON.parse(text_area.dataset.popup_size);
+      var textarea = app_node.querySelector('textarea');
 
-      var config = text_area.dataset;
-      var base_admin_url = config.base_admin_url;
+      var delete_blocks_from_db = Boolean(textarea.hasAttribute('delete_blocks_from_db'));
+      var popup_size = JSON.parse(textarea.dataset.popup_size);
 
-      console.log(config.delete_url);
+      var config = textarea.dataset;
 
       var data = {
-        stream: JSON.parse(initial_data), // [{model_name: ..., id: ...}, ...]
-        model_info: JSON.parse(model_list_info), // {'model_name': model.__doc__}
+        stream: JSON.parse(textarea.innerHTML), // [{model_name: ..., id: ...}, ...]
+        model_metadata: JSON.parse(textarea.getAttribute('model_metadata')), // {'model_name': model.__doc__}
         blocks: {}, // save content of all instances
         show_help: false,
         show_add_block: false,
@@ -51,24 +47,29 @@
           });
 
           // delete removed instances from db when form submit
+          // this could be globally delgated? Then it wouldn't need to be in beforeMount
           if ( delete_blocks_from_db ) {
             // TODO Remove jquery
-            $('input[type="submit"]', text_area.closest('form')).on('click', function (e) {
-              if ( !app.to_delete.length ) return;
+            $('input[type="submit"]', textarea.closest('form')).on('click', function (e) {
+              if (app.to_delete.length > 0) {
 
-              e.preventDefault();
+                e.preventDefault();
 
-              var all_requests = [];
+                // This is rather dangerous -- deletes things with minimal confirmation
+                Promise.all(
+                  app.to_delete.map(
+                    params => ax.delete(
+                      config.delete_url, {
+                        'params': params
+                      }
+                    )
+                  )
+                ).then(() => {
+                  app.to_delete = [];
+                  $(e.target).trigger('click');
+                });
 
-              // could map directly in Promise.all
-              app.to_delete.forEach(({content_type_id, object_id}) => {
-                all_requests.push(app.deleteAction(content_type_id, object_id))  // why app and not this?
-              });
-
-              Promise.all(all_requests).then(function(){
-                app.to_delete = [];
-                $(e.target).trigger('click');
-              });
+              }
 
             }); // EventListener
           }
@@ -78,15 +79,11 @@
           isArray: obj => Array.isArray(obj),
 
           asList: function (block) {
-            return this.model_info[block.content_type_id].as_list;
+            return this.model_metadata[block.content_type_id].as_list;
           },
 
           model_title: function (block) {
-            return this.model_info[block.content_type_id].verbose_name;
-          },
-
-          model_name: function (block) {
-            return this.model_info[block.content_type_id].model_name;
+            return this.model_metadata[block.content_type_id].verbose_name;
           },
 
           instance_unique_id: (block, instance_id) => block.content_type_id + ":" + instance_id,
@@ -95,24 +92,22 @@
 
           hasOptions: function (block) {
             return Object.keys(
-                this.model_info[block.content_type_id].options
+                this.model_metadata[block.content_type_id].options
             ).length > 0;
           },
 
           block_admin_url: function (block) {
-            return this.model_info[block.content_type_id].admin_url;
+            return this.model_metadata[block.content_type_id].admin_url;
           },
 
-          get_change_model_link: function(block, instance_id) {
+          get_change_model_link: function (block, instance_id) {
             // Fix this to actually use URLParams
-            return `${ this.block_admin_url(block) }${ instance_id }/change/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`
+            return `${ this.block_admin_url(block) }${ instance_id }/change/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`;
           },
 
           get_add_model_link: function (block) {
             // Fix this to actually use URLParams
-            return this.block_admin_url(block) +
-              'add/?_popup=1&block_id=' + block.unique_id +
-              '&app_id=' + app_node.id;
+            return `${ this.block_admin_url(block) }add/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`;
           },
 
           getBlockContent: function(block, item_id) {
@@ -124,7 +119,6 @@
             instance_id = parseInt(instance_id);
 
             var block = this.stream.find(block => block['unique_id'] == block_unique_id);
-
 
             // change block content
             ax.get(
@@ -190,18 +184,6 @@
             }
           },
 
-          // TODO Test this better
-          // TODO Consider /streamfield/delete/ with query params instead
-          // This is rather dangerous -- deletes things with minimal confirmation
-          deleteAction: (content_type_id, object_id) => ax.delete(
-            config.delete_url, {
-              'params': {
-                content_type_id: content_type_id,
-                object_id: object_id
-              }
-            }
-          ),
-
           addNewBlock: function (block, content_type_id) {
             // Sometimes a string for some reason?
             content_type_id = parseInt(content_type_id);
@@ -209,7 +191,7 @@
             var options = {};
 
             // Don't fully understand this
-            Object.entries(this.model_info[content_type_id].options).forEach(
+            Object.entries(this.model_metadata[content_type_id].options).forEach(
               ([key, option]) => {
                   app.$set(options, key, option.default);
               }
@@ -223,6 +205,10 @@
             });
 
             this.show_add_block = false;
+
+            // TODO If the block doesn't have as_list, then why not directly open the popup right away?
+
+
           },
 
           openPopup: ({target}) => {
