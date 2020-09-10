@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.admin.sites import site
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.http import JsonResponse
 from django.http import Http404
 from django.contrib.admin.views.decorators import staff_member_required
@@ -8,6 +9,8 @@ from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, View
 from django.views.generic.edit import ModelFormMixin
 from django.views.generic.detail import SingleObjectMixin
+
+from .admin import StreamBlocksAdminMixin
 
 
 # TODO Consider checking a more granular permission?
@@ -46,11 +49,19 @@ class DeleteAnyView(SingleObjectMixin, View):
 
     @property
     def model(self):
-        # TODO Only allow models that are specifically registered?
         try:
-            return ContentType.objects.get_for_id(self.request.GET.get('content_type_id')).model_class()
+            model = ContentType.objects.get_for_id(self.request.GET.get('content_type_id')).model_class()
         except ContentType.DoesNotExist:
             raise Http404
+
+        model_admin = site._registry.get(model)
+
+        # Only allow deleting models that were specifically registered as stream blocks
+        # This prevents this view from being able to be used to delete ANYTHING out of the system
+        if not model_admin or not isinstance(model_admin, StreamBlocksAdminMixin):
+            raise PermissionDenied
+
+        return model
 
     def get_object(self, *args, **kwargs):
         try:
@@ -58,7 +69,7 @@ class DeleteAnyView(SingleObjectMixin, View):
         except ObjectDoesNotExist:
             raise Http404
 
-    def delete(self):
+    def delete(self, request):
         self.get_object().delete()
 
         return JsonResponse({

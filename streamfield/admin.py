@@ -1,22 +1,10 @@
 import json
-from importlib import import_module
-from django.contrib import admin
+
 from django.contrib.admin.options import TO_FIELD_VAR
 from django.template.response import TemplateResponse
-from django.conf import settings
-
-STREAMBLOCKS_APP_PATH = getattr(settings, "STREAMFIELD_STREAMBLOCKS_APP_PATH", "streamblocks")
-
-try:
-    streamblocks_app = import_module("%s.models" % STREAMBLOCKS_APP_PATH)
-    STREAMBLOCKS_MODELS = streamblocks_app.STREAMBLOCKS_MODELS
-except (AttributeError, ValueError):
-    raise Exception(
-        """Can't find STREAMBLOCKS_MODELS: wrong "STREAMFIELD_STREAMBLOCKS_APP_PATH" or STREAMBLOCKS_MODELS don't exist."""
-    )
 
 
-class StreamBlocksAdmin(admin.ModelAdmin):
+class StreamBlocksAdminMixin:
     change_form_template = 'streamfield/admin/change_form.html'
     popup_response_template = 'streamfield/admin/streamfield_popup_response.html'
 
@@ -77,9 +65,3 @@ class StreamBlocksAdmin(admin.ModelAdmin):
         return super().response_delete(request, obj_display, obj_id)
 
 # if user defined admin for his blocks, then do not autoregiser block models
-
-
-for model in STREAMBLOCKS_MODELS:
-    if not model._meta.abstract and \
-            not admin.site.is_registered(model):
-        admin.site.register(model, StreamBlocksAdmin)
