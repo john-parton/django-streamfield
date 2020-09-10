@@ -86,7 +86,7 @@
 
           hasOptions: function (block) {
             return Object.keys(
-                this.model_metadata[block.content_type_id].options
+                this.getMetadata(block, 'options')
             ).length > 0;
           },
 
@@ -181,7 +181,9 @@
             var options = {};
 
             // Don't fully understand this
-            Object.entries(this.model_metadata[content_type_id].options).forEach(
+            Object.entries(
+              this.getMetadata(block, 'options')
+            ).forEach(
               ([key, option]) => {
                   app.$set(options, key, option.default);
               }
@@ -197,8 +199,6 @@
             this.show_add_block = false;
 
             // TODO If the block doesn't have as_list, then why not directly open the popup right away?
-
-
           },
 
           openPopup: ({target}) => {
@@ -213,16 +213,8 @@
         },
 
         computed: {
-          textarea: function(){
-            return JSON.stringify(this.stream.map(function(i){
-              // return only fields that in initial data
-              return {
-                unique_id: i.unique_id,
-                content_type_id: i.content_type_id,
-                object_id: i.object_id,
-                options: i.options
-              };
-            }));
+          textarea: function() {
+            return JSON.stringify(this.stream);
           }
         }
       });
