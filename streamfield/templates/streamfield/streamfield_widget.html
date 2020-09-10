@@ -21,14 +21,14 @@
   <div class="streamfield-models">
     <draggable v-model="stream" group="stream" handle=".block-move">
       <div v-for="block in stream" class="stream-model-block" :key="block.unique_id">
-        <h3 class="streamblock__block__title"><span v-text="model_title(block)"></span>
+        <h3 class="streamblock__block__title"><span v-text="getMetadata(block, 'verbose_name')"></span>
           <span class="streamblock__block-handle">
             <span class="block-move"></span>
             <span class="block-delete" @click="deleteBlock(block.unique_id)"></span>
           </span>
         </h3>
 
-        <div v-if="asList(block)" class="stream-model-block__content" :id="'id_' + block.unique_id">
+        <div v-if="getMetadata(block, 'as_list')" class="stream-model-block__content" :id="'id_' + block.unique_id">
 
           <draggable v-model="block.id" group="items" handle=".subblock-move">
             <span v-for="item_id in block.object_id" class="stream-model-subblock">

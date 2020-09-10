@@ -1,4 +1,4 @@
-(function(w, $) {
+(function (w, $query) {
   /* wtf does this do? */
   function id_to_windowname(text) {
     text = text.replace(/\./g, '__dot__');
@@ -15,7 +15,7 @@
 
     w.streamapps = {};
 
-    document.querySelectorAll('.streamfield_app').forEach(app_node => {
+    $query('.streamfield_app').forEach(app_node => {
 
       var textarea = app_node.querySelector('textarea');
 
@@ -49,44 +49,38 @@
           // delete removed instances from db when form submit
           // this could be globally delgated? Then it wouldn't need to be in beforeMount
           if ( delete_blocks_from_db ) {
-            // TODO Remove jquery
-            $('input[type="submit"]', textarea.closest('form')).on('click', function (e) {
-              if (app.to_delete.length > 0) {
+            $query('#page_form input[type="submit"]').forEach(
+              node => node.addEventListener('click', (e) => {
+                if (app.to_delete.length > 0) {
+                  e.preventDefault();
 
-                e.preventDefault();
-
-                // This is rather dangerous -- deletes things with minimal confirmation
-                Promise.all(
-                  app.to_delete.map(
-                    params => ax.delete(
-                      config.delete_url, {
-                        'params': params
-                      }
+                  // This is rather dangerous -- deletes things with minimal confirmation
+                  Promise.all(
+                    app.to_delete.map(
+                      params => ax.delete(
+                        config.delete_url, {
+                          'params': params
+                        }
+                      )
                     )
-                  )
-                ).then(() => {
-                  app.to_delete = [];
-                  $(e.target).trigger('click');
-                });
-
-              }
-
-            }); // EventListener
+                  ).then(() => {
+                    app.to_delete = [];
+                    node.click();
+                  });
+                }
+              })
+            );
           }
-
         },
+
         methods: {
           isArray: obj => Array.isArray(obj),
 
-          asList: function (block) {
-            return this.model_metadata[block.content_type_id].as_list;
+          getMetadata: function (block, key) {
+            return this.model_metadata[block.content_type_id][key];
           },
 
-          model_title: function (block) {
-            return this.model_metadata[block.content_type_id].verbose_name;
-          },
-
-          instance_unique_id: (block, instance_id) => block.content_type_id + ":" + instance_id,
+          instance_unique_id: (block, instance_id) => `${ block.content_type_id }:${ instance_id }`,
 
           create_unique_hash: () => Math.random().toString(36).substring(7),
 
@@ -96,18 +90,14 @@
             ).length > 0;
           },
 
-          block_admin_url: function (block) {
-            return this.model_metadata[block.content_type_id].admin_url;
-          },
-
           get_change_model_link: function (block, instance_id) {
             // Fix this to actually use URLParams
-            return `${ this.block_admin_url(block) }${ instance_id }/change/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`;
+            return `${ this.getMetadata(block, 'admin_url') }${ instance_id }/change/?_popup=1&app_id=${ app_node.id }&block_id=${ block.unique_id }&instance_id=${ instance_id }`;
           },
 
           get_add_model_link: function (block) {
             // Fix this to actually use URLParams
-            return `${ this.block_admin_url(block) }add/?_popup=1&block_id=${ block.unique_id }&instance_id=${ instance_id }&app_id=${ app_node.id }`;
+            return `${ this.getMetadata(block, 'admin_url') }add/?_popup=1&app_id=${ app_node.id }&block_id=${ block.unique_id }`;
           },
 
           getBlockContent: function(block, item_id) {
@@ -146,7 +136,7 @@
 
             var block = this.stream[index];
 
-            if (confirm(`"${ this.model_title(block) }" - ${ stream_texts['deleteBlock'] }`)) {
+            if (confirm(`"${ this.getMetadata(block, 'verbose_name') }" - ${ stream_texts['deleteBlock'] }`)) {
               this.stream.splice(index, 1);
               // prepare to remove from db
 
@@ -245,4 +235,4 @@
     onReady();
   });
 
-})(window, django.jQuery);
+})(window, document.querySelectorAll);
