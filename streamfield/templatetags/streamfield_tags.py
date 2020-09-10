@@ -3,12 +3,14 @@ import operator as op
 
 from django import template
 from django import forms
+from django.forms import modelform_factory
 from django.utils.text import (
     get_valid_filename,
     camel_case_to_spaces
 )
 from django.utils.safestring import mark_safe
 from django.template import loader
+from django.utils.html import format_html_join
 
 from streamfield.base import StreamItem
 
@@ -19,11 +21,7 @@ register = template.Library()
 def format_field(field):
     widget_name = get_widget_name(field)
 
-    print(field)
-
     default_widget = field.field.widget.template_name.split('/')[-1]
-
-    print(default_widget)
 
     t = loader.select_template([
         f'streamblocks/admin/widgets/{default_widget}',
@@ -58,27 +56,46 @@ def get_widget_name(field):
     )
 
 
-@register.simple_tag(takes_context=True)
-def render_stream(context, stream_list, admin=False):
-    # Sometimes we pass in an encoded json string
+# Not a fan of this here
+# Difficult to understand and customize
+@register.simple_tag
+def render_stream_admin(stream_list):
+    # Value is usually serialized when we try to pass it in
     if isinstance(stream_list, str):
         stream_list = [
             StreamItem(item) for item in json.loads(stream_list)
         ]
 
-    # Not a fan of this here
-    # Difficult to understand and customize
-    if admin:
-        return mark_safe("".join(
-            stream_item._render_admin() for stream_item in stream_list
-        ))
-
     chunks = []
 
-    for template, item_context in map(op.methodcaller('get_template_context', admin=admin), stream_list):
+    for stream_item in stream_list:
+        model_class = stream_item.model_class()
+
+        template = loader.select_template([
+            f'streamblocks/admin/{model_class._meta.model_name}.html',
+            'streamfield/admin/change_form_render_template.html'
+        ])
+
+        form_class = modelform_factory(model_class, fields='__all__')
+
+        for instance in stream_item.instances:
+            chunks.append(
+                template.render({
+                    'form': form_class(instance=instance)
+                })
+            )
+
+    return mark_safe("".join(chunks))
+
+
+@register.simple_tag(takes_context=True)
+def render_stream(context, stream_list, admin=False):
+    chunks = []
+
+    for tmpl, item_context in map(op.methodcaller('get_template_context', admin=admin), stream_list):
         with context.push(**item_context):
             chunks.append(
-                template.render(context)
+                tmpl.render(context)
             )
 
     return mark_safe(

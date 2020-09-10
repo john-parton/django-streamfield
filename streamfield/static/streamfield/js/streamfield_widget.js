@@ -1,4 +1,4 @@
-(function (w, $query) {
+(function (w) {
   /* wtf does this do? */
   function id_to_windowname(text) {
     text = text.replace(/\./g, '__dot__');
@@ -15,7 +15,7 @@
 
     w.streamapps = {};
 
-    $query('.streamfield_app').forEach(app_node => {
+    document.querySelectorAll('.streamfield_app').forEach(app_node => {
 
       var textarea = app_node.querySelector('textarea');
 
@@ -49,7 +49,7 @@
           // delete removed instances from db when form submit
           // this could be globally delgated? Then it wouldn't need to be in beforeMount
           if ( delete_blocks_from_db ) {
-            $query('#page_form input[type="submit"]').forEach(
+            document.querySelectorAll('#page_form input[type="submit"]').forEach(
               node => node.addEventListener('click', (e) => {
                 if (app.to_delete.length > 0) {
                   e.preventDefault();
@@ -227,4 +227,4 @@
     onReady();
   });
 
-})(window, document.querySelectorAll);
+})(window);
