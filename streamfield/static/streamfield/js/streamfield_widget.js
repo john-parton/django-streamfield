@@ -24,9 +24,15 @@
 
       var config = textarea.dataset;
 
+      var model_metadata = {};
+
+      JSON.parse(textarea.getAttribute('model_metadata')).forEach(elem => model_metadata[elem.content_type_id] = elem);
+
+      console.log(model_metadata);
+
       var data = {
         stream: JSON.parse(textarea.innerHTML), // [{model_name: ..., id: ...}, ...]
-        model_metadata: JSON.parse(textarea.getAttribute('model_metadata')), // {'model_name': model.__doc__}
+        model_metadata: model_metadata, // {'model_name': model.__doc__}
         blocks: {}, // save content of all instances
         show_help: false,
         show_add_block: false,
