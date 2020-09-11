@@ -1,11 +1,17 @@
-{% load i18n static %}<!DOCTYPE html>
+{% load i18n %}<!DOCTYPE html>
 <html>
-  <head><title>{% trans 'Popup closing...' %}</title></head>
+  <head><title>{% trans 'Popup closing…' %}</title></head>
   <body>
-    <script type="text/javascript"
-            id="django-admin-popup-response-constants"
-            src="{% static 'streamfield/js/admin_popup_response.js' %}"
-            data-popup-response="{{ popup_response_data }}">
+    <script>
+      'use strict';
+      {
+        {% if action != 'delete' %}
+          opener.streamapps["{{ request.POST.app_id|escapejs }}"].updateBlock(
+              "{{ request.POST.block_id|escapejs }}", {{ object_id }}
+          )
+        {% endif %}
+        window.close()
+      }
     </script>
   </body>
 </html>
