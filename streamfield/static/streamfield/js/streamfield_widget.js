@@ -18,23 +18,17 @@
     document.querySelectorAll('.streamfield_app').forEach(app_node => {
 
       var textarea = app_node.querySelector('textarea');
-
-      var delete_blocks_from_db = Boolean(textarea.hasAttribute('delete_blocks_from_db'));
-      var popup_size = JSON.parse(textarea.dataset.popup_size);
-
       var config = textarea.dataset;
 
-      var model_metadata = {};
+      var delete_blocks_from_db = config.deleteBlocksFromDb !== undefined;
 
-      JSON.parse(textarea.getAttribute('model_metadata')).forEach(elem => model_metadata[elem.content_type_id] = elem);
-
-      console.log(model_metadata);
+      var popup_size = JSON.parse(config.popupSize);
 
       var data = {
         stream: JSON.parse(textarea.innerHTML), // [{model_name: ..., id: ...}, ...]
-        model_metadata: model_metadata, // {'model_name': model.__doc__}
+        model_metadata: JSON.parse(config.modelMetadata), // {'model_name': model.__doc__}
         blocks: {}, // save content of all instances
-        show_help: false,
+        show_help: config.showHelpText !== undefined,
         show_add_block: false,
         to_delete: [] // blocks that will be removed from db
       };

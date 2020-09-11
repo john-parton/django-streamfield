@@ -54,8 +54,6 @@ class StreamField(models.JSONField):
 
                     obj['content_type_id'] = ContentType.objects.get_for_model(model).id
 
-
-
         return [
             StreamItem(**item) for item in value
         ]
