@@ -55,7 +55,8 @@ class StreamItem(StreamItemBase):
         if context['as_list']:
             context['object_list'] = self.instances
         else:
-            context['object'] = self.instances[0]
+            # Will raise Exception if object was removed or there is more than one object in object_id
+            context['object'] = self.instances.get()
 
         try:
             template = loader.get_template(self.template_path)
