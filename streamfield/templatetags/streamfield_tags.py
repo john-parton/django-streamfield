@@ -10,7 +10,6 @@ from django.utils.text import (
 )
 from django.utils.safestring import mark_safe
 from django.template import loader
-from django.utils.html import format_html_join
 
 from streamfield.base import StreamItem
 

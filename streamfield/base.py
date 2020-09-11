@@ -1,6 +1,7 @@
 import collections
 
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Case, Value, When, IntegerField
 from django.template import loader
 from django.utils.functional import cached_property
 
@@ -18,12 +19,16 @@ class StreamItem(StreamItemBase):
     @cached_property
     def instances(self):
         # Should this use _base_manager ?
-        # Technically this could use a big Case/When construct
-        return sorted(
-            self.model_class().objects.filter(
-                pk__in=self.object_id
-            ),
-            key=lambda obj: self.object_id.index(obj.pk)
+        # This returns a "real" queryset with the ordering specified by the location of the key in the index
+        return self.model_class().objects.filter(
+            pk__in=self.object_id
+        ).order_by(
+            Case(
+                *[
+                    When(pk=pk, then=Value(index)) for index, pk in enumerate(self.object_id)
+                ],
+                output_field=IntegerField()  # Maybe not idea, PK could be non-integral
+            )
         )
 
     @property
