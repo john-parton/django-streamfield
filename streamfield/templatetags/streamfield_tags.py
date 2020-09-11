@@ -63,7 +63,7 @@ def render_stream_admin(stream_list):
     # Value is usually serialized when we try to pass it in
     if isinstance(stream_list, str):
         stream_list = [
-            StreamItem(item) for item in json.loads(stream_list)
+            StreamItem(**item) for item in json.loads(stream_list)
         ]
 
     chunks = []

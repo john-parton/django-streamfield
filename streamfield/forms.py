@@ -31,6 +31,8 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
 
             content_type = ContentType.objects.get_for_model(model)
 
+            # Will overwrite if model is specified more than once
+            # Could skip
             model_metadata[content_type.id] = {
                 'verbose_name': str(opts.verbose_name_plural if as_list else opts.verbose_name),
                 'as_list': as_list,
@@ -53,9 +55,9 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
         return attrs
 
     def prepare_value(self, value):
-        if isinstance(value, list):
-            value = [
-                dict(item) for item in value
-            ]
+        # Could do map(op.methodcaller('_asdict')) but that's PAINFULLY clunky
+        value = [
+            item._asdict() for item in value
+        ]
 
         return super().prepare_value(value)

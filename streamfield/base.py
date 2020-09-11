@@ -1,66 +1,30 @@
 import collections
 
 from django.contrib.contenttypes.models import ContentType
-from django.utils.html import format_html_join
 from django.template import loader
-from django.forms import modelform_factory
+from django.utils.functional import cached_property
 
 
-# TODO Consider collections.namedtuple instead -- it's invalid to set another key, and the ones here are all required
-class StreamItem(collections.UserDict):
-    # Always has the following keys
-    # unique_id: str
-    # content_type_id: int
-    # object_id: List[int]   # Always a list, even if there's only one value
-    # options: Dict
+StreamItemBase = collections.namedtuple(
+    'StreamItemBase',
+    ('unique_id', 'content_type_id', 'object_id', 'options')
+)
 
+
+class StreamItem(StreamItemBase):
     def model_class(self):
-        return ContentType.objects.get_for_id(self['content_type_id']).model_class()
+        return ContentType.objects.get_for_id(self.content_type_id).model_class()
 
-    @property
+    @cached_property
     def instances(self):
-        if hasattr(self, '_instances'):
-            return self._instances
-
-        ids = self['object_id']
-
         # Should this use _base_manager ?
-        self._instances = list(
+        # Technically this could use a big Case/When construct
+        return sorted(
             self.model_class().objects.filter(
-                pk__in=ids
-            )
+                pk__in=self.object_id
+            ),
+            key=lambda obj: self.object_id.index(obj.pk)
         )
-
-        self._instances.sort(key=lambda instance: ids.index(instance.pk))
-
-        return self._instances
-
-    @instances.setter
-    def instances(self, instances):
-        del self._instance
-
-        instances = list(instances)
-
-        assert instances
-
-        self._instances = instances
-
-        content_type_id = None
-        object_id = []
-
-        for instance in instances:
-            content_type = ContentType.objects.get_for_model(type(instance))
-            if content_type_id is None:
-                content_type_id = content_type.id
-            elif content_type_id != content_type.id:
-                raise Exception("ContentType.id mismatch")
-
-            object_id.append(
-                instance.pk
-            )
-
-        self['content_type_id'] = content_type_id
-        self['object_id'] = object_id
 
     @property
     def template_path(self):
@@ -77,7 +41,7 @@ class StreamItem(collections.UserDict):
 
         context = {
             'model_class': model_class,
-            'unique_id': self['unique_id'],
+            'unique_id': self.unique_id,
             'as_list': getattr(model_class, 'as_list', False),
             # 'app_label': model._meta.app_label,
             'model_name': model_class._meta.model_name
