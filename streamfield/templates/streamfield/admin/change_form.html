@@ -3,9 +3,12 @@
 {% block after_related_objects %}
   {{ block.super }}
 
-  <!-- !!! START:StreamField Popup Hidden Field !!! -->
-  {% if request.GET.block_id and is_popup %}<input type="hidden" name="block_id" value="{{ request.GET.block_id }}" />{% endif %}
-  {% if request.GET.instance_id and is_popup %}<input type="hidden" name="instance_id" value="{{ request.GET.instance_id }}" />{% endif %}
-  {% if request.GET.app_id and is_popup %}<input type="hidden" name="app_id" value="{{ request.GET.app_id }}" />{% endif %}
-  <!-- !!! END:  StreamField Popup Hidden Field !!! -->
+  {% if is_popup %}
+    <!-- StreamField popup hidden fields -->
+    {# This will FAIL if the object has any fields that conflict! Foreign key called "block" or "app" might be common #}
+    {# TODO Prefix these streamfield__block_id, streamfield__key ... etc. #}
+    <input type="hidden" name="block_id" value="{{ request.GET.block_id }}" />
+    <input type="hidden" name="instance_id" value="{{ request.GET.instance_id }}" />
+    <input type="hidden" name="app_id" value="{{ request.GET.app_id }}" />
+  {% endif %}
 {% endblock %}

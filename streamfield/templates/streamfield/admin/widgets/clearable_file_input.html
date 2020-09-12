@@ -3,7 +3,7 @@
 <p>
   {% if field.value %}
     {% if field.field.widget.attrs.accept == "image/*" %}  {# Hack for image fields #}
-      <img src="{{ field.value.url }}" title="{{ field.value }}" style="width:120px; height:120px; object-fit: contain;"/>  {# Hard-coded width #}
+      <img src="{{ field.value.url }}" title="{{ field.value }}" class="streamfield-image" />
     {% else %}
       {{ field.value }}
     {% endif %}

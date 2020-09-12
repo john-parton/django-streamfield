@@ -110,9 +110,11 @@
     margin-bottom: 0.4em;
 }
 
+/*
 .streamfield_app .stream-model-block .stream-model-block__content img {
     border: 1px solid #b6b6b6;
 }
+*/
 
 .streamfield_app .block-fields table td,
 .streamfield_app .block-fields table th {
@@ -133,12 +135,14 @@
     font-weight: bold;
 }
 
+/*
 .streamfield_app .block-fields svg,
 .streamfield_app .block-fields img
 {
     max-width: 150px;
     max-height: 150px;
 }
+*/
 
 .streamfield_app .stream-model-subblock {
     background: #e0e7eb;
@@ -171,12 +175,14 @@
     margin-left: 10px;
 }
 
+/*
 .streamfield_app .stream-model-block__content.abstract-block a img {
     border: 3px solid #a6d1e0;
 }
 .streamfield_app .stream-model-block__content.abstract-block a:hover img {
     border-color: #78adbf;
 }
+*/
 
 
 /* add new block */
@@ -280,4 +286,12 @@
 }
 #content-main .streamfield_app .stream-help-text ul {
     margin-left: 0;
+}
+
+/* Utility classes for media */
+.streamfield-image {
+    /* TODO Pick better dimensions */
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
 }
