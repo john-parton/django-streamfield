@@ -7,7 +7,6 @@ from django.utils.functional import SimpleLazyObject
 
 from .settings import (
     BLOCK_OPTIONS,
-    SHOW_ADMIN_HELP_TEXT,
     DELETE_BLOCKS_FROM_DB
 )
 from .widgets import StreamWidget
@@ -47,7 +46,6 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
 
         attrs.update({
             'data-model-metadata': SimpleLazyObject(self.get_model_metadata),
-            'data-show-help-text': SHOW_ADMIN_HELP_TEXT,
             'data-delete-blocks-from-db': DELETE_BLOCKS_FROM_DB,
             'data-popup-size': json.dumps(self.popup_size),
         })

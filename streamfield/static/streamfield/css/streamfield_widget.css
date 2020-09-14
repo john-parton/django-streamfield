@@ -1,15 +1,17 @@
 .streamfield_app {
-    max-width: 758px;
-    width: 98%;
+    /*max-width: 758px;
+    width: 98%;*/
     margin-top: 5px;
 }
 
 
+/*
 .streamfield_app::before {
   content: "";
   display: table;
   clear: both;
 }
+*/
 
 .streamfield_app textarea {
     display: none;
@@ -235,10 +237,12 @@
 .streamblock__block-handle .block-delete,
 .stream-model-subblock .subblock-delete {
     position: relative;
-    width: 24px;
-    height: 24px;
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAACvBAMAAAAVlgMGAAAAGFBMVEUAAABCQkIwnL+/MDBBQUFDQ0Mwm7+/MDC6BnJcAAAABXRSTlMAn5+foPEIPbMAAACVSURBVEjH7ZQxCgIxEEV/dhHbNPbBYuvtvIAH0MILbGEteH+QGUKegTRbZsmr8nnDn1SjA3KKUnjkEJ7SJcqxl+WiTBSFIDDWKKCapYO+Oa/S/Mlh/kq3VY69LBdloigEgbFGAdUsHXRIiDvPRs3dyeHlVH7v4QpRg16YkmDZhNiWhEgT6p+rk8PbUQMKqGZp/Z0j8gNoghnFfJszcgAAAABJRU5ErkJggg==');
+    width: 12px;
+    height: 12px;
+    padding: 6px;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAwCAYAAAAlzZsxAAAAxElEQVRIx7VSQQ7DIAzjSXyhwC87Kf0JT2PN1FbTCEkMWiRfsA2JQwgzVUppOWca8cyxpjuQTENOIrSLOoEp/jW5xLABagkaGo4VXtz/q8bYTpDCE2u6A8k05CRCu6gTmGLBZIthA9QSNDQcK7y45UopEQMRtwtkirdta/cLqkkSmCZXnS0cCMLXgC6sZX8npJ0Nk3InBC1u6mtwxVclhl+81/aBZXrE1wuqSRKYJl/Pez0QhGdAJxZamxkainVqcZ6v8QZ9YJpPpE01lgAAAABJRU5ErkJggg==');
     background-repeat: no-repeat;
+    background-clip: content-box;
     display: block;
     margin-left: 0;
     float: left;
@@ -246,19 +250,19 @@
 }
 .streamblock__block-handle .block-delete,
 .stream-model-subblock .subblock-delete {
-    background-position: 0 -9px;
+    background-position: 6px 6px;
 }
 .streamblock__block-handle .block-delete:hover,
 .stream-model-subblock .subblock-delete:hover {
-    background-position: 0 -53px;
+    background-position: 6px -6px;
 }
 .streamblock__block-handle .block-move,
 .stream-model-subblock .subblock-move {
-    background-position: 0 -97px;
+    background-position: 6px -18px;
 }
 .streamblock__block-handle .block-move:hover,
 .stream-model-subblock .subblock-move:hover {
-    background-position: 0 -141px;
+    background-position: 6px -30px;
 }
 
 [v-cloak] {

@@ -11,14 +11,12 @@
 
 {# Actual vue app #}
 <div class="streamfield_app" id="app_{{ widget.name }}" v-cloak>
-  {% if widget.attrs.show_admin_help_text %}
-    <div class="stream-help-text">
-      <div class="stream-help-text__title" @click="show_help=!show_help">{% trans "Help?" %}</div>
-      <div v-if="show_help" class="stream-help-text__content">
-        {% include "streamfield/streamfield_admin_help.html" %}
-      </div>
+  <div class="stream-help-text">
+    <div class="stream-help-text__title" @click="show_help = !show_help">{% trans "Help?" %}</div>
+    <div v-if="show_help" class="stream-help-text__content">
+      {% include "streamfield/streamfield_admin_help.html" %}
     </div>
-  {% endif %}
+  </div>
 
   <div class="streamfield-models">
     <draggable v-model="stream" group="stream" handle=".block-move">
