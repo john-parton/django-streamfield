@@ -69,7 +69,7 @@
             </a>
           </span>
 
-          <span>
+          <span v-if="!block.object_id.length">
             <a class="stream-btn" :id="'add_id_' + block.unique_id" title="{% trans 'Add content' %}" :href="get_add_model_link(block)"
                @click.prevent="openPopup">
               + {% trans "Add content" %}
