@@ -6,9 +6,14 @@
       'use strict';
       {
         {% if action != 'delete' %}
-          opener.streamapps["{{ request.POST.app_id|escapejs }}"].updateBlock(
-              "{{ request.POST.block_id|escapejs }}", {{ object_id }}
-          )
+
+          if ("streamapps" in opener) {
+            opener.streamapps["{{ request.POST.app_id|escapejs }}"].updateBlock(
+                "{{ request.POST.block_id|escapejs }}", {{ object_id }}
+            );
+          } else if ("streamfield_callback" in opener) {
+            opener.streamfield_callback();
+          }
         {% endif %}
         window.close()
       }
