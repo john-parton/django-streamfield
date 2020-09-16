@@ -91,7 +91,7 @@ def render_stream_admin(stream_list):
 def render_stream(context, stream_list, admin=False):
     chunks = []
 
-    for tmpl, item_context in map(op.methodcaller('get_template_context', admin=admin), stream_list):
+    for tmpl, item_context in map(op.methodcaller('get_template_context'), stream_list):
         with context.push(**item_context):
             chunks.append(
                 tmpl.render(context)
