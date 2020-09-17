@@ -29,34 +29,49 @@ class StreamField(models.JSONField):
         if isinstance(value, str):
             value = json.loads(value)
 
+        results = []
+
         # For old values that used the old system
         for obj in value:
-            if 'id' in obj:
-                warnings.warn("Got 'id' key in StreamItem instead of object_id.")
-                obj['object_id'] = obj.pop('id')
+            if isinstance(obj, StreamItem):
+                results.append(obj)
 
-            if not isinstance(obj['object_id'], list):
-                warnings.warn("Got non-list 'object_id' in StreamItem.")
-                obj['object_id'] = [obj['object_id']]
+            elif isinstance(obj ,list):
+                # If you accidentally manually serialize a tuple
+                results.append(
+                    StreamItem(*obj)
+                )
 
-            if 'model_name' in obj:
-                warnings.warn("Got 'model_name' in StreamItem instead of 'content_type_id'.")
-                model_name = obj.pop('model_name').lower()
+            else:
+                if 'id' in obj:
+                    warnings.warn("Got 'id' key in StreamItem instead of object_id.")
+                    obj['object_id'] = obj.pop('id')
 
-                if 'content_type_id' not in obj:
+                if not isinstance(obj['object_id'], list):
 
-                    model = next(
-                        filter(
-                            (lambda model: model._meta.model_name.lower() == model_name),
-                            self.model_list
+                    warnings.warn("Got non-list 'object_id' in StreamItem.")
+                    obj['object_id'] = [obj['object_id']]
+
+                if 'model_name' in obj:
+                    warnings.warn("Got 'model_name' in StreamItem instead of 'content_type_id'.")
+                    model_name = obj.pop('model_name').lower()
+
+                    if 'content_type_id' not in obj:
+
+                        model = next(
+                            filter(
+                                (lambda model: model._meta.model_name.lower() == model_name),
+                                self.model_list
+                            )
                         )
-                    )
 
-                    obj['content_type_id'] = ContentType.objects.get_for_model(model).id
+                        obj['content_type_id'] = ContentType.objects.get_for_model(model).id
 
-        return [
-            StreamItem(**item) for item in value
-        ]
+                results.append(
+                    StreamItem(**obj)
+                )
+
+        return results
 
     # Not sure this could be more easily accomplished with a LazyObject
     @cached_property
