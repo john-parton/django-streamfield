@@ -17,7 +17,7 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
 
     def __init__(self, model_list, **kwargs):
         self.model_list = model_list
-        self.popup_size = kwargs.pop('popup_size', (1000, 500))
+        self.popup_size = kwargs.pop('popup_size', (1200, 800))
         super().__init__(**kwargs)
 
     def get_model_metadata(self):
