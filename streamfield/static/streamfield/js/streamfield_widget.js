@@ -29,7 +29,6 @@
         model_metadata: JSON.parse(config.modelMetadata), // {'model_name': model.__doc__}
         blocks: {}, // save content of all instances
         show_help: config.showHelpText !== undefined,
-        show_add_block: false,
         to_delete: [] // blocks that will be removed from db
       };
 
@@ -195,8 +194,6 @@
               options: options,
               object_id: []
             });
-
-            this.show_add_block = false;
 
             // TODO If the block doesn't have as_list, then why not directly open the popup right away?
           },

@@ -91,8 +91,8 @@
       </div>
     </draggable>
     <div class="stream-insert-new-block">
-      <div class="add-new-block-button" @click="show_add_block=!show_add_block">+ {% trans "Add new block" %}</div>
-      <ul v-if="show_add_block">
+      <h3>{% trans "Add new block" %}</h3>
+      <ul>
         <li v-for="(block, content_type_id) in model_metadata">
           <a class="stream-btn" href="#" v-text="'+ ' + block.verbose_name" @click.prevent="addNewBlock(block, content_type_id)"></a>
         </li>

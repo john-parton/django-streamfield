@@ -188,9 +188,20 @@
 
 
 /* add new block */
-.streamfield_app .stream-insert-new-block {
-    text-align: right;
+.streamfield_app h3 {
+    padding-left: 0;
 }
+
+.streamfield_app .stream-insert-new-block ul {
+    padding-left: 0;
+    margin-left: 0;
+}
+
+.streamfield_app .stream-insert-new-block ul li {
+    display: inline-block;
+    margin-right: 0.5em;
+}
+
 .streamfield_app .add-new-block-button {
     padding: 5px;
     font-weight: bold;
