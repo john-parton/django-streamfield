@@ -21,6 +21,7 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
         super().__init__(**kwargs)
 
     def get_model_metadata(self):
+        # TODO Fix ordering
         metadata = {}
 
         # Remove dupes. There shouldn't be any, but not guaranteed, I guess?
@@ -53,9 +54,8 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
         return attrs
 
     def prepare_value(self, value):
-        # Could do map(op.methodcaller('_asdict')) but that's PAINFULLY clunky
         value = [
-            item._asdict() for item in value
+            item if isinstance(item, dict) else item._asdict() for item in value
         ]
 
         return super().prepare_value(value)
