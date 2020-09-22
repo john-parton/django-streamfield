@@ -1,3 +1,3 @@
 <p>
-  {{ field.value|default:"" }}
+  {{ field.value|default:""|striptags|truncatechars:500 }}
 </p>

@@ -49,7 +49,8 @@ class StreamItem(StreamItemBase):
             'unique_id': self.unique_id,
             'as_list': getattr(model_class, 'as_list', False),
             # 'app_label': model._meta.app_label,
-            'model_name': model_class._meta.model_name
+            'model_name': model_class._meta.model_name,
+            'options': self.options
         }
 
         if context['as_list']:
