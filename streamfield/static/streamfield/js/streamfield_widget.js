@@ -151,7 +151,7 @@
           },
 
           deleteInstance: function(block_unique_id, instance_id) {
-            var index = this.stream.findIndex(block => block['unique_id'] == unique_id);
+            var index = this.stream.findIndex(block => block['unique_id'] == block_unique_id);
 
             if (index == -1) {
               return;
