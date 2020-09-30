@@ -87,6 +87,7 @@ class StreamField(models.JSONField):
                     apps.get_model(elem)
                 )
 
+        # Consider wrapping in unique()
         return model_list
 
     def formfield(self, **kwargs):

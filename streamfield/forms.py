@@ -1,3 +1,4 @@
+import itertools as it
 import json
 
 from django import forms
@@ -12,11 +13,20 @@ from .settings import (
 from .widgets import StreamWidget
 
 
+def unique(iterable):
+    seen = set()
+    seen_add = seen.add
+
+    for element in it.filterfalse(seen.__contains__, iterable):
+        seen_add(element)
+        yield element
+
+
 class StreamField(forms.JSONField):  # Make name better, move to "fields" module
     widget = StreamWidget
 
     def __init__(self, model_list, **kwargs):
-        self.model_list = model_list
+        self.model_list = list(unique(model_list))
         self.popup_size = kwargs.pop('popup_size', (1200, 800))
         super().__init__(**kwargs)
 
@@ -25,7 +35,7 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
         metadata = []
 
         # Remove dupes. There shouldn't be any, but not guaranteed, I guess?
-        for model in frozenset(self.model_list):
+        for model in self.model_list:
             opts = model._meta
 
             as_list = getattr(model, "as_list", False)
