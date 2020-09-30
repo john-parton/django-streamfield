@@ -22,7 +22,7 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
 
     def get_model_metadata(self):
         # TODO Fix ordering
-        metadata = {}
+        metadata = []
 
         # Remove dupes. There shouldn't be any, but not guaranteed, I guess?
         for model in frozenset(self.model_list):
@@ -32,13 +32,13 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
 
             content_type = ContentType.objects.get_for_model(model)
 
-            metadata[content_type.id] = {
+            metadata.append({
                 'content_type_id': content_type.id,
                 'verbose_name': str(opts.verbose_name_plural if as_list else opts.verbose_name),
                 'as_list': as_list,
                 'options': getattr(model, "options", BLOCK_OPTIONS),  # Why is the necessary?,
                 'admin_url': reverse(f'admin:{opts.app_label}_{opts.model_name}_changelist')
-            }
+            })
 
         return json.dumps(metadata)
 

@@ -26,7 +26,7 @@
 
       var data = {
         stream: JSON.parse(textarea.innerHTML), // [{model_name: ..., id: ...}, ...]
-        model_metadata: JSON.parse(config.modelMetadata), // {'model_name': model.__doc__}
+        models: JSON.parse(config.modelMetadata), // {'model_name': model.__doc__}
         blocks: {}, // save content of all instances
         show_help: config.showHelpText !== undefined,
         to_delete: [] // blocks that will be removed from db
@@ -76,7 +76,7 @@
           isArray: obj => Array.isArray(obj),
 
           getMetadata: function (block, key) {
-            return this.model_metadata[block.content_type_id][key];
+            return this.models.find(model => model.content_type_id == block.content_type_id)[key];
           },
 
           instance_unique_id: (block, instance_id) => `${ block.content_type_id }:${ instance_id }`,
@@ -173,15 +173,15 @@
             }
           },
 
-          addNewBlock: function (block, content_type_id) {
+          addNewBlock: function (model) {
             // Sometimes a string for some reason?
-            content_type_id = parseInt(content_type_id);
+            var content_type_id = parseInt(model.content_type_id);
 
             var options = {};
 
             // Don't fully understand this
             Object.entries(
-              this.getMetadata(block, 'options')
+              model.options
             ).forEach(
               ([key, option]) => {
                   app.$set(options, key, option.default);

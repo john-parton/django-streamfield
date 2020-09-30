@@ -76,7 +76,7 @@
         </div>
 
         <div class="stream-block__options" v-if="hasOptions(block)">
-          <div class="stream-block__option" v-for="(option, key) in model_metadata[block.content_type_id].options">
+          <div class="stream-block__option" v-for="(option, key) in getMetadata(block, 'options')">
             <template v-if="option.type == 'checkbox'">
               <span v-text="option.label"></span>: <input type="checkbox" v-model="block.options[key]">
             </template>
@@ -93,8 +93,8 @@
     <div class="stream-insert-new-block">
       <h3>{% trans "Add new block" %}</h3>
       <ul>
-        <li v-for="(block, content_type_id) in model_metadata">
-          <a class="stream-btn" href="#" v-text="'+ ' + block.verbose_name" @click.prevent="addNewBlock(block, content_type_id)"></a>
+        <li v-for="model in models">
+          <a class="stream-btn" href="#" v-text="'+ ' + model.verbose_name" @click.prevent="addNewBlock(model)"></a>
         </li>
       </ul>
     </div>
