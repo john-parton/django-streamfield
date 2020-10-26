@@ -29,8 +29,7 @@
         </h3>
 
         <div v-if="getMetadata(block, 'as_list')" class="stream-model-block__content" :id="'id_' + block.unique_id">
-
-          <draggable v-model="block.id" group="items" handle=".subblock-move">
+          <draggable v-model="block.object_id" :group="{ name: block.content_type_id + '_items' }" handle=".subblock-move">
             <span v-for="item_id in block.object_id" class="stream-model-subblock">
               <span class="model-field-content" :id="'id_' + instance_unique_id(block, item_id)" v-html="getBlockContent(block, item_id)"></span>
 
