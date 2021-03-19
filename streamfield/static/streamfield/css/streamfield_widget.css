@@ -41,6 +41,7 @@
 .streamfield_app .stream-model-block .streamblock__block__title span {
     font-weight: bold;
     margin-left: 0;
+    font-size: 1.1rem;
 }
 
 .streamfield_app .stream-block__options {
@@ -160,7 +161,7 @@
 
 .streamfield_app .stream-btn {
     background: #78adbf;
-    color: white;
+    color: white !important;
     padding: 3px 7px;
     display: inline-block;
     border-radius: 2px;
@@ -201,7 +202,9 @@
     display: inline-block;
     margin-right: 0.5em;
 }
-
+.streamfield_app .stream-insert-new-block li {
+    list-style: none;
+}
 .streamfield_app .add-new-block-button {
     padding: 5px;
     font-weight: bold;
