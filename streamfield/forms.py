@@ -40,7 +40,7 @@ class StreamField(forms.JSONField):  # Make name better, move to "fields" module
 
             as_list = getattr(model, "as_list", False)
 
-            content_type = ContentType.objects.get_for_model(model)
+            content_type = ContentType.objects.get_for_model(model, for_concrete_model=False)
 
             metadata.append({
                 'content_type_id': content_type.id,

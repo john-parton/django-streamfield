@@ -65,7 +65,7 @@ class StreamField(models.JSONField):
                             )
                         )
 
-                        obj['content_type_id'] = ContentType.objects.get_for_model(model).id
+                        obj['content_type_id'] = ContentType.objects.get_for_model(model, for_concrete_model=False).id
 
                 results.append(
                     StreamItem(**obj)
